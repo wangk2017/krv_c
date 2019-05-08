@@ -1,5 +1,5 @@
-wire uart_tx_wr = !(DUT.m_apb.uart_0.uart_0.WEn || DUT.m_apb.uart_0.uart_0.csn);
-wire[7:0] uart_tx_data = DUT.m_apb.uart_0.uart_0.data_in;
+wire uart_tx_wr = DUT.m_apb.uart_0.tx_data_reg_wr;
+wire[7:0] uart_tx_data = DUT.m_apb.uart_0.tx_data;
 
 //Play a trick to let the simulation run faster
 

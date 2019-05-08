@@ -115,7 +115,6 @@ begin
 	begin
 		iPADDR <= 32'h0;
 		iPWRITE <= 1'b0;
-		iPWDATA <= 32'h0;
 	end
 	else
 	begin
@@ -123,10 +122,24 @@ begin
 		begin
 			iPADDR <= HADDR;
 			iPWRITE <= HWRITE;
+		end
+	end
+end
+always @ (posedge HCLK or negedge HRESETN)
+begin
+	if(!HRESETN)
+	begin
+		iPWDATA <= 32'h0;
+	end
+	else
+	begin
+		if(PSEL)
+		begin
 			iPWDATA <= HWDATA;
 		end
 	end
 end
+
 
 assign PSEL = iPSEL;
 assign PENABLE = iPENABLE;

@@ -30,13 +30,16 @@ input				TMS,
 input				TRST,
 
 //dmi interface
-output				dtm_valid,
-input				dmi_ready,
-output[`DBUS_M_WIDTH - 1 : 0]	dtm_bits,
+input				sys_clk,
+input				sys_rstn,
 
-input				dmi_valid,
-output				dtm_ready,
-input[`DBUS_S_WIDTH - 1 : 0]	dmi_bits
+output				dtm_req_valid,
+input				dtm_req_ready,
+output[`DBUS_M_WIDTH - 1 : 0]	dtm_req_bits,
+
+input				dm_resp_valid,
+output				dm_resp_ready,
+input[`DBUS_S_WIDTH - 1 : 0]	dm_resp_bits
 );
 
 //TAP controller
@@ -177,18 +180,54 @@ wire [`DBUS_M_WIDTH - 1 : 0]		dtm_cs_read_data;
 wire [`DBUS_M_WIDTH - 1 : 0]		bypass_read_data;
 wire [`DBUS_M_WIDTH - 1 : 0]		idcode_read_data;
 
-//TODO
-//CDC between JTAG TCK domain and debug module clk domain
 
 //DMI access
-wire [`DBUS_S_WIDTH - 1 : 0]	dmi_bits_sync;
+wire [`DBUS_S_WIDTH - 1 : 0]	afifo_sysclk_2_TCK_read_data;
+wire afifo_sysclk_2_TCK_read_data_valid;
+wire [`DBUS_S_WIDTH - 1 : 0]	dmi_bits_sync = afifo_sysclk_2_TCK_read_data_valid ? afifo_sysclk_2_TCK_read_data : {`DBUS_S_WIDTH{1'b0}};
+
+wire[1:0] dmi_op_read = dmi_bits_sync [`DBUS_OP_WIDTH - 1 : 0];
 
 assign dmi_read_data = {DR_reg[(`DBUS_DATA_WIDTH + `DBUS_OP_WIDTH) +: `DBUS_ADDR_WIDTH],		//addr 
 			dmi_bits_sync};		//dmi return data
 
-//TODO
 //DTM contrl and status
-assign dtm_cs_read_data = {};
+wire dmireset = (IR_reg == DTM_CS) && (tap_state == UPDATE_DR) && shift_reg[16];
+
+reg sticky_error;
+wire afifo_TCK_2_sysclk_full;
+wire afifo_TCK_2_sysclk_overflow = dmi_busy && DR_reg_valid;
+
+
+always @ (posedge TCK or posedge TRST)
+begin
+	if(TRST)
+	begin
+		sticky_error <= 1'b0;
+	end
+	else
+	begin
+		if(dmireset)
+		sticky_error <= 1'b0;
+		else if(dmi_op_read[1] || afifo_TCK_2_sysclk_overflow)
+		sticky_error <= 1'b1;
+	end
+end
+
+wire dmi_busy = afifo_TCK_2_sysclk_full || sticky_error;
+
+wire[2:0] dtm_idle = 5;
+wire [1:0] dmi_state = {(dmi_op_read[1] || afifo_TCK_2_sysclk_overflow), afifo_TCK_2_sysclk_overflow};
+wire [5:0] dtm_abits = 5;
+wire [3:0] dtm_version = 0 ;
+
+assign dtm_cs_read_data = {(`DBUS_M_WIDTH - 15){1'b0},
+				dtm_idle,
+				dmi_state,
+				dtm_abits,
+				dtm_version
+				};
+
 
 //BYPASS
 assign bypass_read_data = {`DBUS_M_WIDTH{1'b0}};
@@ -268,9 +307,9 @@ begin
 	else
 	begin
 		if(tap_state == UPDATE_DR)
-		DR_reg <= 1'b1;
-		else if(dmi_ready_sync)
-		DR_reg <= 1'b0;
+		DR_reg_valid <= 1'b1;
+		else
+		DR_reg_valid <= 1'b0;
 	end
 end
 
@@ -289,6 +328,44 @@ begin
 		TDO <= 1'b0;
 	end
 end
+
+
+//CDC between JTAG TCK domain and debug module clk domain
+//async fifo from TCK to system clock
+async_fifo #(.DATA_WIDTH(`DBUS_M_WIDTH), .FIFO_DEPTH(2),.PTR_WIDTH(1)) 
+afifo_TCK_2_sysclk(
+.wr_clk		(TCK),
+.wr_rstn	(!TRST),
+.wr_valid	(DR_reg_valid),
+.wr_data	(DR_reg),
+.rd_clk		(sys_clk),
+.rd_rstn	(sys_rstn),
+.rd_ready	(dtm_req_ready),
+.rd_valid	(dtm_req_valid),
+.rd_data	(dtm_req_bits),
+.full		(afifo_TCK_2_sysclk_full),
+.empty		()
+);
+
+//async fifo from system clock to TCK
+wire dmt_read_ready = (tap_state ==CAPTURE_DR);
+wire afifo_sysclk_2_TCK_full;
+async_fifo #(.DATA_WIDTH(`DBUS_S_WIDTH), .FIFO_DEPTH(2),.PTR_WIDTH(1)) 
+afifo_sysclk_2_TCK(
+.wr_clk		(sys_clk),
+.wr_rstn	(sys_rstn),
+.wr_valid	(dm_resp_valid),
+.wr_data	(dm_resp_bits),
+.rd_clk		(TCK),
+.rd_rstn	(!TRST),
+.rd_ready	(dmt_read_ready),
+.rd_valid	(afifo_sysclk_2_TCK_read_data_valid),
+.rd_data	(afifo_sysclk_2_TCK_read_data),
+.full		(afifo_sysclk_2_TCK_full),
+.empty		()
+);
+
+assign dm_resp_ready = !afifo_sysclk_2_TCK_full;
 
 
 endmodule

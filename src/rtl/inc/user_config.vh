@@ -1,4 +1,5 @@
 `define KRV_HAS_PLIC
+`define KRV_HAS_DBG
 `define KRV_HAS_MTIMER
 `define KRV_HAS_ITCM
 `define KRV_HAS_DTCM

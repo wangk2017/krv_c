@@ -22,6 +22,7 @@
 //                      First version				||
 //===============================================================
 `include "core_defines.vh"
+`include "dbg_defines.vh"
 module gprs (
 //global signals
 input cpu_clk,					//cpu clock
@@ -38,11 +39,32 @@ output [`DATA_WIDTH - 1 : 0] gprs_data1,	//source 1 data from gprs
 input [`RS2_WIDTH - 1 : 0] rs2_dec,		//source 2 index in DEC stage
 output [`DATA_WIDTH - 1 : 0] gprs_data2 	//source 2 data from gprs
 
+//debug interface
+`ifdef KRV_HAS_DBG
+,
+input				dbg_reg_access,
+input 				dbg_wr1_rd0,
+input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
+input[`DATA_WIDTH - 1 : 0]	dbg_write_data
+output[`DATA_WIDTH - 1 : 0]	dbg_read_data
+`endif
+
 );
 
 //----------------------------------------//
 //Register File
 //----------------------------------------//
+`ifdef KRV_HAS_DBG
+wire dbg_gprs_range = (dbg_regno >= 16'h1000) && (dbg_regno <= 16'h101f);
+wire dbg_wr = dbg_reg_access && dbg_wr1_rd0 && dbg_gprs_range;
+wire dbg_rd = dbg_reg_access && !dbg_wr1_rd0 && dbg_gprs_range;
+assign dbg_read_data = dbg_rd ? gprs_X[dbg_regno[4:0]] : 32'h0;
+`else
+wire dbg_wr = 1'b0;
+wire [`CMD_REGNO_SIZE - 1 : 0]	dbg_regno = 16'h0;
+wire [`DATA_WIDTH - 1 : 0]	dbg_write_data = 32'h0;
+`endif
+
 wire [`DATA_WIDTH - 1 : 0] gprs_X [31:0];
 reg wr_en [31:1];
 
@@ -51,9 +73,11 @@ always @ *
 begin
 	for(i=1; i<32; i=i+1)
 	begin
-		wr_en[i] = wr_valid && (i==rd_wb);
+		wr_en[i] = (wr_valid && (i==rd_wb)) || (dbg_wr && (i==dbg_regno[4:0]));
 	end
 end
+
+wire [`DATA_WIDTH - 1 : 0] gprs_wr_data = dbg_wr ? dbg_write_data : wr_data; 		//write data
 
 genvar gprs_index;
 
@@ -71,7 +95,7 @@ generate
 		gpr u_gpr (.clk		(cpu_clk),
 			   .rstn	(cpu_rstn),
 			   .wr_en 	(wr_en[gprs_index]),
-			   .wr_data	(wr_data),
+			   .wr_data	(gprs_wr_data),
 			   .rd_data	(gprs_X[gprs_index])
 				);
 		end

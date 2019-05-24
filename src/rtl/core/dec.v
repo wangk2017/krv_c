@@ -115,6 +115,17 @@ input wire [`DATA_WIDTH - 1 : 0] mcsr_read_data,		// mcsr read data
 
 //to pg_ctrl
 output reg wfi							// WFI
+
+//debug interface
+`ifdef KRV_HAS_DBG
+,
+input				dbg_reg_access,
+input 				dbg_wr1_rd0,
+input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
+input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
+output[`DATA_WIDTH - 1 : 0]	dbg_read_data
+`endif
+
 );
 
 
@@ -330,6 +341,16 @@ gprs u_gprs(
 .rs2_dec		(rs2),			//source 2 index 
 .gprs_data1		(gprs_data1),		//source 1 data from gprs
 .gprs_data2		(gprs_data2)		//source 2 data from gprs
+
+`ifdef KRV_HAS_DBG
+,
+.dbg_reg_access		(dbg_reg_access	),
+.dbg_wr1_rd0		(dbg_wr1_rd0	),
+.dbg_regno		(dbg_regno	),
+.dbg_write_data		(dbg_write_data	),
+.dbg_read_data		(dbg_read_data	)
+`endif
+
 
 );
 

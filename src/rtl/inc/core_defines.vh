@@ -97,6 +97,12 @@
 `define MEDELEG_ADDR		12'h302
 `define MIDELEG_ADDR		12'h303
 
+//dbg csrs
+`define DCSR_ADDR		12'h7b0
+`define DPC_ADDR		12'h7b1
+`define DSCRATCH0_ADDR		12'h7b2
+
+
 `define MTIME_ADDR		16'hbff8
 `define MTIMECMP_ADDR		16'h4000
 

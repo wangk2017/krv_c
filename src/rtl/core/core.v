@@ -87,6 +87,18 @@ module core (
 	input  wire [`DATA_WIDTH - 1 : 0] DAHB_read_data,		//DAHB access read data
 	input  wire DAHB_read_data_valid				//DAHB access read data valid	
 
+`ifdef KRV_HAS_DBG
+//debug interface
+,
+input				dbg_reg_access,
+input 				dbg_wr1_rd0,
+input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
+input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
+output[`DATA_WIDTH - 1 : 0]	dbg_gprs_read_data,
+output[`DATA_WIDTH - 1 : 0]	dbg_csrs_read_data,
+`endif
+
+
 );
 
 
@@ -194,6 +206,10 @@ wire 					mret;
 wire 					mepc_sel;
 wire 					mcause_sel;
 wire 					mtval_sel;
+`ifdef KRV_HAS_DBG
+wire					dbg_wr;
+`endif
+
 wire [`INSTR_WIDTH - 1 : 0] 		illegal_instr;
 wire 					valid_interrupt;
 wire 					mstatus_mie;
@@ -216,7 +232,9 @@ wire 					wb_ready;
 
 wire 					comb_rstn;
 
-
+`ifdef KRV_HAS_DBG
+wire 					dbg_mode;
+`endif
 //===========================================================================//
 //There are below blocks in the core
 //--reset_comb
@@ -374,6 +392,16 @@ dec u_dec (
 .load_x0		(load_x0),
 .mret			(mret),
 .wfi			(wfi)
+`ifdef KRV_HAS_DBG
+,
+.dbg_reg_access		(dbg_reg_access	),
+.dbg_wr1_rd0		(dbg_wr1_rd0	),
+.dbg_regno		(dbg_regno	),
+.dbg_write_data		(dbg_write_data	),
+.dbg_read_data		(dbg_gprs_read_data	)
+`endif
+
+
 );
 
 //-----------------------------------------------------//
@@ -547,6 +575,17 @@ mcsr u_mcsr(
 .mtvec_base		(mtvec_base),
 .dtcm_en		(dtcm_en),
 .dtcm_start_addr	(dtcm_start_addr)
+`ifdef KRV_HAS_DBG
+,
+.dbg_mode		(dbg_mode	),
+.dbg_reg_access		(dbg_reg_access	),
+.dbg_wr1_rd0		(dbg_wr1_rd0	),
+.dbg_regno		(dbg_regno	),
+.dbg_wr			(dbg_wr		),
+.dbg_write_data		(dbg_write_data	),
+.dbg_read_data		(dbg_csrs_read_data	)
+`endif
+
 
 );
 
@@ -588,6 +627,11 @@ trap_ctrl u_trap_ctrl (
 .exception_met		(exception_met),
 .ecall			(ecall),
 .vector_addr		(vector_addr)
+`ifdef KRV_HAS_DBG
+,
+.dbg_wr			(dbg_wr		),
+.dbg_write_data		(dbg_write_data	),
+`endif
 );
 
 

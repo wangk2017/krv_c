@@ -73,6 +73,14 @@ output reg [`ADDR_WIDTH - 1 : 0] mepc,			//mepc
 output reg [`DATA_WIDTH - 1 : 0] mcause,		//mcause
 output reg [`DATA_WIDTH - 1 : 0] mtval			//mtval
 
+`ifdef KRV_HAS_DBG
+//debug interface
+,
+input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
+input				dbg_wr
+`endif
+
+
 );
 
 
@@ -146,7 +154,11 @@ begin
 	end
 	else
 	begin
-		if(mepc_sel & valid_wr)	//soft control
+		if (dbg_wr && mepc_sel)
+		begin
+			mepc = dbg_write_data;
+		end
+		else if(mepc_sel & valid_wr)	//soft control
 		begin
 			if(mcsr_set)
 			begin
@@ -199,7 +211,11 @@ begin
 	end
 	else
 	begin
-		if(mcause_sel & valid_wr)	//soft control
+		if (dbg_wr && mcause_sel)
+		begin
+			mcause = dbg_write_data;
+		end
+		else if(mcause_sel & valid_wr)	//soft control
 		begin
 			if(mcsr_set)
 			begin
@@ -263,7 +279,11 @@ begin
 	end
 	else
 	begin
-		if(mtval_sel & valid_wr)	//soft control
+		if (dbg_wr && mtval_sel)
+		begin
+			mtval = dbg_write_data;
+		end
+		else if(mtval_sel & valid_wr)	//soft control
 		begin
 			if(mcsr_set)
 			begin

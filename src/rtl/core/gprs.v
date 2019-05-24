@@ -45,7 +45,7 @@ output [`DATA_WIDTH - 1 : 0] gprs_data2 	//source 2 data from gprs
 input				dbg_reg_access,
 input 				dbg_wr1_rd0,
 input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
-input[`DATA_WIDTH - 1 : 0]	dbg_write_data
+input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
 output[`DATA_WIDTH - 1 : 0]	dbg_read_data
 `endif
 

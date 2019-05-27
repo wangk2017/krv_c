@@ -101,6 +101,7 @@ input wire valid_interrupt,					// interrupt
 input wire exception_met,					// exception condition met
 output wire load_x0,						// load x0 exception
 output wire ecall,						// ecall instruction
+output wire ebreak,						// ebreak instruction
 
 //interface with mcsr block
 output wire mcsr_rd,						// valid mcsr read signal
@@ -166,7 +167,7 @@ wire instruction_is_load;
 wire instruction_is_store;
 wire instruction_is_system;
 wire instruction_is_fence;
-wire instruction_is_ecall;
+wire instruction_is_ecall_brk;
 
 assign instruction_is_lui	 = (opcode==`LUI);
 assign instruction_is_auipc	 = (opcode==`AUIPC);
@@ -179,7 +180,7 @@ assign instruction_is_alu_ir	 = (opcode==`ALU_IR);
 assign instruction_is_alu_rr	 = (opcode==`ALU_RR);
 assign instruction_is_system	 = (opcode==`SYSTEM);
 assign instruction_is_fence	 = (opcode==`FENCE);
-assign instruction_is_ecall	 = (opcode==`ECALL);
+assign instruction_is_ecall_brk	 = (opcode==`ECALL_BRK);
 
 wire R_type;
 wire I_type;
@@ -221,10 +222,12 @@ assign funct3_111 = (funct3 == `FUNCT3_111);
 wire funct12_mret;
 wire funct12_wfi;
 wire funct12_ecall;
+wire funct12_ebreak;
 
 assign funct12_mret 	= 	(funct12 == `FUNCT12_MRET);
 assign funct12_wfi	= 	(funct12 == `FUNCT12_WFI);
 assign funct12_ecall	= 	(funct12 == `FUNCT12_ECALL);
+assign funct12_ebreak	= 	(funct12 == `FUNCT12_EBREAK);
 
 //funct7 decoding
 wire funct7_000_0000;
@@ -801,7 +804,10 @@ end
 assign mret = (instruction_is_system && funct12_mret && funct3_000) && !branch_taken_ex;
 
 //ecall
-assign  ecall = instruction_is_ecall && funct12_ecall;
+assign  ecall = instruction_is_ecall_brk && funct3_000 && funct12_ecall;
+
+//ebreak
+assign  ebreak = instruction_is_ecall_brk && funct3_000 && funct12_ebreak;
 
 //WFI instruction for pg_ctrl
 reg wfi_delay1;

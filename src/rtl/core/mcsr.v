@@ -548,14 +548,14 @@ begin
 	begin
 		if(dbg_mode)	//debug mode registers are only accessible from Debug Mode
 		begin
-			if (dbg_wr && tcm_ctrl_sel)
+			if (dbg_wr && dcsr_sel)
 			begin
 				ebreakm <= dbg_write_data[15];
 				stepie <= dbg_write_data[11];
 				step   <= dbg_write_data[2];
 				prv    <= dbg_write_data[1:0];
 			end
-			else if (tcm_ctrl_sel & valid_mcsr_wr)
+			else if (dcsr_sel & valid_mcsr_wr)
 			begin
 				if(mcsr_set)
 				begin
@@ -585,7 +585,7 @@ end
 
 always @ *
 begin
-	if(bkp_exception)
+	if(breakpoint)
 	cause = 3'h4;
 	else if (ebreak_met)
 	cause = 3'h3;
@@ -600,9 +600,42 @@ end
 wire [`DATA_WIDTH - 1 : 0] dcsr_rd_data;
 assign dcsr_rd_data = (dcsr_sel && dbg_mode)? {xdebugver,12'h0,ebreakm,1'b0,ebreaks,ebreaku,stepie,stopcount,stoptime,cause,1'b0,mprven,nmip,step,prv} : {`DATA_WIDTH{1'b0}};
 
+//TODO
 //dpc
+always @ (posedge cpu_clk or negedge cpu_rstn)
+begin
+	if(!cpu_rstn)
+	begin
+		dpc <= boot_addr;
+	end
+	else
+	begin
+		if(breakpoint)
+		begin
+			if(timing)
+			dpc <= pc;
+			else
+			dpc <= pc_dec;
+		end
+		else if (ebreak_met)
+			dpc <= pc_dec;
+		else if(resethaltreq || haltreq)
+			dpc <= pc_dec;
+		else if(step)
+			dpc <= pc_dec;
+		else if(dbg_mode)
+		begin
+			if (dbg_wr && dpc_sel)
+			begin
+				dpc <= dbg_write_data;
+			end
+		end
+	end
+end
 
-//dscratch0
+wire [`DATA_WIDTH - 1 : 0] dpc_rd_data;
+assign dpc_rd_data = (dpc_sel && dbg_mode)? dpc : {`DATA_WIDTH{1'b0}};
+
 `endif
 
 //Combine csr read data

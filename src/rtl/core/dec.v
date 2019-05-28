@@ -83,6 +83,7 @@ output reg mem_B_ex,						// propagate byte accessto EX stage
 output reg mem_U_ex,						// propagate unsigned load to EX stage
 output reg [`RD_WIDTH:0] rd_ex, 				// propagate rd to EX stage
 output reg [`ADDR_WIDTH - 1 : 0] pc_ex,				// propagate pc to EX stage
+output reg [`DATA_WIDTH - 1 : 0] instr_ex,			// propagate pc to EX stage
 
 //interface with dmem_ctrl
 input wire load_wait_data,
@@ -699,6 +700,7 @@ begin
 		mem_B_ex <= 1'b0;
 		mem_U_ex <= 1'b0;
 		pc_ex <= 0;
+		instr_ex <= 0;
 		imm_ex <= {`DATA_WIDTH{1'b0}};
 		pre_instr_is_load <= 1'b0;
 	end
@@ -724,6 +726,7 @@ begin
 				mem_B_ex <= 1'b0;
 				mem_U_ex <= 1'b0;
 				pc_ex <= pc_ex;
+				instr_ex <= instr_ex;
 			end
 			else
 			begin
@@ -734,6 +737,7 @@ begin
 				mem_B_ex <= (instruction_is_load || instruction_is_store) && (funct3_000 || funct3_100); 
 				mem_U_ex <= (instruction_is_load || instruction_is_store) && (funct3_101 || funct3_100); 
 				pc_ex <= pc_dec;
+				instr_ex <= instr_dec;
 				imm_ex <= imm_dec;
 			end
 		end

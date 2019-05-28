@@ -41,10 +41,13 @@ input wire mcsr_set,					//mcsr set
 input wire mcsr_clr,					//mcsr clear
 input wire [`DATA_WIDTH - 1 : 0] write_data,		//mcsr write data
 output wire [`DATA_WIDTH - 1 : 0] read_data,		//mcsr read data
+input [`DATA_WIDTH - 1 : 0] mctrl_rd_data,
 output reg tselect,
 output reg [`DATA_WIDTH - 1 : 0] tdata1,
-output reg [`DATA_WIDTH - 1 : 0] tdata2,
-output reg [`DATA_WIDTH - 1 : 0] tdata3
+output reg [`DATA_WIDTH - 1 : 0] tdata2_t0,
+output reg [`DATA_WIDTH - 1 : 0] tdata3_t0,
+output reg [`DATA_WIDTH - 1 : 0] tdata2_t1,
+output reg [`DATA_WIDTH - 1 : 0] tdata3_t1
 
 
 `ifdef KRV_HAS_DBG
@@ -73,6 +76,7 @@ wire dbg_rd = !dbg_wr1_rd0 && dbg_csrs_access;
 wire dbg_addr = dbg_regno[11:0];
 assign dbg_read_data = dbg_rd ? read_data : 32'h0;
 `else
+wire dbg_mode = 1'b0;
 wire dbg_wr = 1'b0;
 wire dbg_rd = 1'b0;
 wire [`DATA_WIDTH - 1 : 0]	dbg_write_data = 32'h0;
@@ -143,7 +147,7 @@ begin
 		begin
 			tdata1 = dbg_write_data;
 		end
-		else if (tdata1_sel & valid_mcsr_wr)
+		else if (tdata1_sel && valid_mcsr_wr)
 		begin
 			if(mcsr_set)
 			begin
@@ -161,9 +165,13 @@ begin
 	end
 end
 
+wire type = tdata1[`DATA_WIDTH - 1 : `DATA_WIDTH -4];
+wire dmode = tdata1[`DATA_WIDTH - 5];
+
+wire valid_tdata_wr = dmode ? (valid_mcsr_wr && dbg_mode) : valid_mcsr_wr;
 
 wire [`DATA_WIDTH - 1 : 0] tdata1_rd_data;
-assign tdata1_rd_data = (tdata1_sel)? tdata1 : {`DATA_WIDTH{1'b0}};
+assign tdata1_rd_data = (tdata1_sel)? ((type == 2) ? mctrl_rd_data : tdata1) : {`DATA_WIDTH{1'b0}};
 
 
 
@@ -173,27 +181,40 @@ always @ (posedge cpu_clk or negedge cpu_rstn)
 begin
 	if(!cpu_rstn)
 	begin
-		tdata2 <= 1'b0;
+		tdata2_t0 <= 1'b0;
+		tdata2_t1 <= 1'b0;
 	end
 	else
 	begin
 		if (dbg_wr && tdata2_sel)
 		begin
-			tdata2 = dbg_write_data;
+			if(tselect)
+			tdata2_t1 = dbg_write_data;
+			else
+			tdata2_t0 = dbg_write_data;
 		end
-		else if (tdata2_sel & valid_mcsr_wr)
+		else if (tdata2_sel & valid_tdata_wr)
 		begin
 			if(mcsr_set)
 			begin
-				tdata2 <= tdata2 | write_data;
+				if(tselect)
+				tdata2_t1 <= tdata2_t1 | write_data;
+				else
+				tdata2_t0 <= tdata2_t0 | write_data;
 			end
 			else if(mcsr_clr)
 			begin
-				tdata2 <= tdata2 & (~write_data);
+				if(tselect)
+				tdata2_t1 <= tdata2_t1 & (~write_data);
+				else
+				tdata2_t0 <= tdata2_t0 & (~write_data);
 			end
 			else
 			begin
-				tdata2 <= write_data;
+				if(tselect)
+				tdata2_t1 <= write_data;
+				else
+				tdata2_t0 <= write_data;
 			end
 		end
 	end
@@ -201,37 +222,52 @@ end
 
 
 wire [`DATA_WIDTH - 1 : 0] tdata2_rd_data;
-assign tdata2_rd_data = (tdata2_sel)? tdata2 : {`DATA_WIDTH{1'b0}};
+assign tdata2_rd_data = (tdata2_sel)? (tselect ?  tdata2_t1 : tdata2_t0) : {`DATA_WIDTH{1'b0}};
 
 
 
 //tdata3 -- Trigger Data3
 
+
+
 always @ (posedge cpu_clk or negedge cpu_rstn)
 begin
 	if(!cpu_rstn)
 	begin
-		tdata3 <= 1'b0;
+		tdata3_t0 <= 1'b0;
+		tdata3_t1 <= 1'b0;
 	end
 	else
 	begin
 		if (dbg_wr && tdata3_sel)
 		begin
-			tdata3 = dbg_write_data;
+			if(tselect)
+			tdata3_t1 = dbg_write_data;
+			else
+			tdata3_t0 = dbg_write_data;
 		end
-		else if (tdata3_sel & valid_mcsr_wr)
+		else if (tdata3_sel & valid_tdata_wr)
 		begin
 			if(mcsr_set)
 			begin
-				tdata3 <= tdata3 | write_data;
+				if(tselect)
+				tdata3_t1 <= tdata3_t1 | write_data;
+				else
+				tdata3_t0 <= tdata3_t0 | write_data;
 			end
 			else if(mcsr_clr)
 			begin
-				tdata3 <= tdata3 & (~write_data);
+				if(tselect)
+				tdata3_t1 <= tdata3_t1 & (~write_data);
+				else
+				tdata3_t0 <= tdata3_t0 & (~write_data);
 			end
 			else
 			begin
-				tdata3 <= write_data;
+				if(tselect)
+				tdata3_t1 <= write_data;
+				else
+				tdata3_t0 <= write_data;
 			end
 		end
 	end
@@ -239,9 +275,7 @@ end
 
 
 wire [`DATA_WIDTH - 1 : 0] tdata3_rd_data;
-assign tdata3_rd_data = (tdata3_sel)? tdata3 : {`DATA_WIDTH{1'b0}};
-
-
+assign tdata3_rd_data = (tdata3_sel)? (tselect ?  tdata3_t1 : tdata3_t0) : {`DATA_WIDTH{1'b0}};
 
 
 

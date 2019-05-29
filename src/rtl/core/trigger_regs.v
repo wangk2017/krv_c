@@ -50,7 +50,7 @@ output reg [`DATA_WIDTH - 1 : 0] tdata2_t1,
 output reg [`DATA_WIDTH - 1 : 0] tdata3_t1
 
 
-`ifdef KRV_HAS_DBG
+//`ifdef KRV_HAS_DBG
 //debug interface
 ,
 input				dbg_mode,
@@ -58,9 +58,10 @@ input				dbg_reg_access,
 input 				dbg_wr1_rd0,
 input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
 input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
+output                     	dbg_read_data_valid,
 output[`DATA_WIDTH - 1 : 0]	dbg_read_data,
 output				dbg_wr
-`endif
+//`endif
 
 
 );
@@ -68,20 +69,23 @@ output				dbg_wr
 //------------------------------------------------//
 //For Debugger access 
 //------------------------------------------------//
-`ifdef KRV_HAS_DBG
+//`ifdef KRV_HAS_DBG
 wire dbg_csrs_range = (dbg_regno >= 16'h0000) && (dbg_regno <= 16'h0fff);
 wire dbg_csrs_access = dbg_reg_access && dbg_csrs_range;
 assign dbg_wr = dbg_wr1_rd0  && dbg_csrs_access;
 wire dbg_rd = !dbg_wr1_rd0 && dbg_csrs_access;
 wire dbg_addr = dbg_regno[11:0];
+assign dbg_read_data_valid = dbg_rd;
 assign dbg_read_data = dbg_rd ? read_data : 32'h0;
-`else
+//`else
+/*
 wire dbg_mode = 1'b0;
 wire dbg_wr = 1'b0;
 wire dbg_rd = 1'b0;
 wire [`DATA_WIDTH - 1 : 0]	dbg_write_data = 32'h0;
 wire dbg_addr = 12'h0;
-`endif
+*/
+//`endif
 
 //------------------------------------------------//
 //Register address decode
@@ -165,13 +169,13 @@ begin
 	end
 end
 
-wire type = tdata1[`DATA_WIDTH - 1 : `DATA_WIDTH -4];
+wire data1_type = tdata1[`DATA_WIDTH - 1 : `DATA_WIDTH -4];
 wire dmode = tdata1[`DATA_WIDTH - 5];
 
 wire valid_tdata_wr = dmode ? (valid_mcsr_wr && dbg_mode) : valid_mcsr_wr;
 
 wire [`DATA_WIDTH - 1 : 0] tdata1_rd_data;
-assign tdata1_rd_data = (tdata1_sel)? ((type == 2) ? mctrl_rd_data : tdata1) : {`DATA_WIDTH{1'b0}};
+assign tdata1_rd_data = (tdata1_sel)? ((data1_type == 2) ? mctrl_rd_data : tdata1) : {`DATA_WIDTH{1'b0}};
 
 
 
@@ -277,6 +281,13 @@ end
 wire [`DATA_WIDTH - 1 : 0] tdata3_rd_data;
 assign tdata3_rd_data = (tdata3_sel)? (tselect ?  tdata3_t1 : tdata3_t0) : {`DATA_WIDTH{1'b0}};
 
+//Combine trigger_regs read data
+assign read_data = {`DATA_WIDTH{valid_mcsr_rd || dbg_rd}} & 
+		(tselect_rd_data |
+		 tdata1_rd_data  |
+		 tdata2_rd_data  |
+		 tdata3_rd_data  
+		 );
 
 
 

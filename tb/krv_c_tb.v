@@ -2,14 +2,14 @@
 `include "tb_defines.vh"
 `timescale 1ns/100ps
 
-module krv_m_TB ();
+module krv_c_TB ();
 
 reg clk_in;
 reg porn;
 wire UART_TX;
 wire [7:0] GPIO_OUT;
 
-krv_m DUT (
+krv_c DUT (
 	.clk_in			(clk_in),
 	.porn			(porn),
 	.UART_TX		(UART_TX),
@@ -128,7 +128,7 @@ end
 initial
 begin
 $dumpfile("./out/krv.vcd");
-$dumpvars(0, krv_m_TB);
+$dumpvars(0, krv_c_TB);
 end
 
 //signals for debug

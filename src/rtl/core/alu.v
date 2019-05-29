@@ -86,7 +86,9 @@ output reg [`DATA_WIDTH - 1 : 0] store_data_mem,	// store data at MEM stage
 output wire [`ADDR_WIDTH - 1 : 0] mem_addr_mem		// memory address at MEM stage
 `ifdef KRV_HAS_DBG
 ,
+input wire breakpoint,
 input wire dbg_mode,
+output wire [`ADDR_WIDTH - 1 : 0] mem_addr_ex		// memory address at MEM stage
 `endif
 
 
@@ -355,6 +357,9 @@ begin
 	end
 end
 
+`ifdef KRV_HAS_DBG
+assign mem_addr_ex  = (load_ex || store_ex ) ? alu_result_ex : {`ADDR_WIDTH{1'b0}};
+`endif
 assign mem_addr_mem = (load_mem || store_mem ) ? alu_result_mem : {`ADDR_WIDTH{1'b0}};
 always@(posedge cpu_clk or negedge cpu_rstn)
 begin

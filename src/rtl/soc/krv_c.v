@@ -13,7 +13,7 @@
 */
 
 //==============================================================||
-// File Name: 		krv_m.v					||
+// File Name: 		krv_c.v					||
 // Author:    		Kitty Wang				||
 // Description: 						||
 //	      		top of krv-m			     	|| 
@@ -21,7 +21,7 @@
 //===============================================================
 
 `include "top_defines.vh"
-module krv_m (
+module krv_c (
 //global interface
 input clk_in,		//clock in
 input porn,		//power on reset, active low
@@ -33,6 +33,15 @@ output [7:0] GPIO_OUT,
 //UART
 input UART_RX,
 output UART_TX
+
+`ifdef KRV_HAS_DBG
+,
+input				TDI,
+output				TDO,
+input				TCK,
+input				TMS,
+input				TRST
+`endif
 
 );
 
@@ -179,6 +188,15 @@ wire dma_dtcm_rdata_valid;
 	wire timer_int;
 
 	wire  [`INT_NUM - 1 : 0] external_int = {31'h0, timer_int};
+
+`ifdef KRV_HAS_DBG
+wire				dbg_reg_access;
+wire 				dbg_wr1_rd0;
+wire[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno;
+wire [`DATA_WIDTH - 1 : 0]	dbg_write_data;
+wire                     	dbg_read_data_valid;
+wire[`DATA_WIDTH - 1 : 0]	dbg_read_data;
+`endif
 	
 //-----------------------------------------------------//
 //PLL
@@ -297,6 +315,16 @@ core u_core (
 	.DAHB_trans_buffer_full			(DAHB_trans_buffer_full),
 	.DAHB_read_data				(DAHB_read_data),
 	.DAHB_read_data_valid			(DAHB_read_data_valid)
+`ifdef KRV_HAS_DBG
+//debug interface
+,
+.dbg_reg_access		(dbg_reg_access	),
+.dbg_wr1_rd0		(dbg_wr1_rd0	),
+.dbg_regno		(dbg_regno	),
+.dbg_write_data		(dbg_write_data	),
+.dbg_read_data_valid	(dbg_read_data_valid),
+.dbg_read_data		(dbg_read_data	)
+`endif
 
 );
 
@@ -645,5 +673,54 @@ assign HRESP_core_timer = 2'h0;
 assign core_timer_int = 1'b0;
 `endif
 
+`ifdef KRV_HAS_DBG
+//-----------------------------------------------------//
+//dtm
+//-----------------------------------------------------//
+wire dtm_req_valid;
+wire dtm_req_ready;
+wire [`DBUS_M_WIDTH - 1 : 0]	dtm_req_bits;
+wire dm_resp_valid;
+wire dm_resp_ready;
+wire [`DBUS_S_WIDTH - 1 : 0]	dm_resp_bits;
+
+dtm u_dtm (
+.TDI			(TDI		),
+.TDO			(TDO		),
+.TCK			(TCK		),
+.TMS			(TMS		),
+.TRST			(TRST		),
+.sys_clk		(cpu_clk	),
+.sys_rstn		(cpu_rstn	),
+.dtm_req_valid		(dtm_req_valid	),
+.dtm_req_ready		(dtm_req_ready	),
+.dtm_req_bits		(dtm_req_bits	),
+.dm_resp_valid		(dm_resp_valid	),
+.dm_resp_ready		(dm_resp_ready	),
+.dm_resp_bits		(dm_resp_bits	)
+);
+
+//-----------------------------------------------------//
+//dm
+//-----------------------------------------------------//
+dm u_dm(
+.sys_clk		(cpu_clk	),
+.sys_rstn		(cpu_rstn	),
+.dtm_req_valid		(dtm_req_valid	),
+.dtm_req_ready		(dtm_req_ready	),
+.dtm_req_bits		(dtm_req_bits	),
+.dm_resp_valid		(dm_resp_valid	),
+.dm_resp_ready		(dm_resp_ready	),
+.dm_resp_bits		(dm_resp_bits	),
+.dbg_reg_access		(dbg_reg_access	),
+.dbg_wr1_rd0		(dbg_wr1_rd0	),
+.dbg_regno		(dbg_regno	),
+.dbg_write_data		(dbg_write_data	),
+.dbg_read_data_valid	(dbg_read_data_valid),
+.dbg_read_data		(dbg_read_data	)
+);
+
+
+`endif
 
 endmodule

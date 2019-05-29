@@ -15,6 +15,7 @@
 `include "core_defines.vh"
 `include "kplic_defines.vh"
 `include "ahb_defines.vh"
+`include "dbg_defines.vh"
 
 //Global defines
 `define SYNC_HCLK 1

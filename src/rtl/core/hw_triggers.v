@@ -42,22 +42,25 @@ output[`DATA_WIDTH - 1 : 0] mctrl_rd_data,
 input [`ADDR_WIDTH - 1 : 0] pc_ex,
 input load_ex,
 input store_ex,
-input [`ADDR_WIDTH - 1 : 0] mem_addr_ex
+input [`ADDR_WIDTH - 1 : 0] mem_addr_ex,
 
 input dbg_mode,
-output reg breakpoint,		//enter debug mode
-output reg breakpoint_exp,	//just a breakpoint exception
+output reg breakpoint		//enter debug mode
+/*
+,
+output reg breakpoint_exp	//just a breakpoint exception
+*/
 
 );
 
 
 //tdata1 decode
-wire type = tdata1[`DATA_WIDTH - 1 : `DATA_WIDTH -4];
+wire [3:0] data1_type = tdata1[(`DATA_WIDTH - 1) : (`DATA_WIDTH - 4)];
 wire dmode = tdata1[`DATA_WIDTH - 5];
 
-//mcontrol when tdata1.type == 2
+//mcontrol when tdata1.data1_type == 2
 
-wire mctrl_type = (type == 2);
+wire mctrl_type = (data1_type == 2);
 
 wire [5:0] maskmax = mctrl_type ? tdata1[`DATA_WIDTH - 6 : `DATA_WIDTH - 11] : 6'h0;
 wire select = 1'b0;
@@ -71,7 +74,7 @@ wire execute = mctrl_type ? tdata1[2] : 1'h0;
 wire store = mctrl_type ? tdata1[1] : 1'h0;
 wire load = mctrl_type ? tdata1[0] : 1'h0;
 
-assign mctrl_rd_data = {type,dmode,maskmax,1'b0,select,timing,sizelo,action,chain,match,m_prv,3'b0,execute,store,load};
+assign mctrl_rd_data = {data1_type,dmode,maskmax,1'b0,select,timing,sizelo,action,chain,match,m_prv,3'b0,execute,store,load};
 
 
 wire trigger_type = {execute,store,load};
@@ -82,7 +85,7 @@ always @ *
 begin
 	if(!tselect && m_prv)	//select trigger0 at M priviledge
 	begin
-		case {trigger_type)
+		case (trigger_type)
 		3'b001: begin			//load
 			if(load_ex && (mem_addr_ex == tdata2_t0))
 			trigger0 = 1'b1;
@@ -114,7 +117,7 @@ always @ *
 begin
 	if(!tselect && m_prv)	//select trigger1 at M priviledge
 	begin
-		case {trigger_type)
+		case (trigger_type)
 		3'b001: begin			//load
 			if(load_ex && (mem_addr_ex == tdata2_t1))
 			trigger1 = 1'b1;
@@ -156,7 +159,7 @@ begin
 		breakpoint <= 1'b0;
 	end
 end
-
+/*
 //breakpoint_exception
 
 always @ (posedge cpu_clk or negedge cpu_rstn)
@@ -173,7 +176,7 @@ begin
 		breakpoint_exp <= 1'b0;
 	end
 end
-
+*/
 
 
 endmodule

@@ -19,7 +19,7 @@
 // History:   		2019.05.12				||
 //                      First version				||
 //===============================================================
-`include "dbg_defines"
+`include "dbg_defines.vh"
 
 module dtm(
 
@@ -217,12 +217,13 @@ end
 
 wire dmi_busy = afifo_TCK_2_sysclk_full || sticky_error;
 
-wire[2:0] dtm_idle = 5;
+wire[2:0] dtm_idle = 3'h5;
 wire [1:0] dmi_state = {(dmi_op_read[1] || afifo_TCK_2_sysclk_overflow), afifo_TCK_2_sysclk_overflow};
-wire [5:0] dtm_abits = 5;
-wire [3:0] dtm_version = 0 ;
+wire [5:0] dtm_abits = 6'h5;
+wire [3:0] dtm_version = 4'h0;
+`define DBUS_M_WIDTH_MINUS_15 `DBUS_M_WIDTH - 15 
 
-assign dtm_cs_read_data = {(`DBUS_M_WIDTH - 15){1'b0},
+assign dtm_cs_read_data = {{`DBUS_M_WIDTH_MINUS_15{1'b0}},
 				dtm_idle,
 				dmi_state,
 				dtm_abits,
@@ -238,7 +239,7 @@ localparam VERSION	= 4'h0;
 localparam PARTNUM	= 16'h0000;
 localparam MANUFID	= 11'h000;
 
-assign idcode = {`DBUS_M_WIDTH_MINUS_32{1'b0}, VERSION, PARTNUM, MANUFID,1'b1};
+assign idcode = {{`DBUS_M_WIDTH_MINUS_32{1'b0}}, VERSION, PARTNUM, MANUFID,1'b1};
 
 
 
@@ -262,8 +263,8 @@ begin
 			default		:	shift_reg <= bypass_read_data;
 			endcase
 		end
-		SHIFT_DR,SHIFT_IF:	shift_reg <= {TDI, shift_reg[`DBUS_M_WIDTH - 1 : 1]};
-		CAPTURE_IR:		shift_reg <= {`DBUS_M_WIDTH_MINUS_1{1'b0},1'b1};
+		SHIFT_DR,SHIFT_IR:	shift_reg <= {TDI, shift_reg[`DBUS_M_WIDTH - 1 : 1]};
+		CAPTURE_IR:		shift_reg <= {{`DBUS_M_WIDTH_MINUS_1{1'b0}},1'b1};
 		default: 		shift_reg <= {`DBUS_M_WIDTH{1'b0}};
 		endcase
 	end

@@ -42,10 +42,6 @@ output wire jal_dec,						// jal
 output reg signed [`DATA_WIDTH - 1 : 0] imm_ex,			// imm at EX stage
 output wire signed [`DATA_WIDTH - 1 : 0] imm_dec,		// imm at DEC stage
 output wire mret,						// mret
-`ifdef KRV_HAS_DBG
-input wire dbg_mode,
-output wire dret,
-`endif
 
 //interface with alu
 output reg dec_valid,
@@ -126,10 +122,15 @@ output reg wfi							// WFI
 //debug interface
 `ifdef KRV_HAS_DBG
 ,
+input				breakpoint,
+input [`DATA_WIDTH - 1 : 0] 	d_regs_read_data,
+input  				dbg_mode,
+output 				dret,
 input				dbg_reg_access,
 input 				dbg_wr1_rd0,
 input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
 input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
+output				dbg_read_data_valid,
 output[`DATA_WIDTH - 1 : 0]	dbg_read_data
 `endif
 
@@ -357,6 +358,7 @@ gprs u_gprs(
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
 .dbg_regno		(dbg_regno	),
 .dbg_write_data		(dbg_write_data	),
+.dbg_read_data_valid	(dbg_read_data_valid),
 .dbg_read_data		(dbg_read_data	)
 `endif
 
@@ -477,7 +479,7 @@ begin
 	end
 	else if(mcsr_rd)
 	begin
-		src_data2_dec = mcsr_read_data;
+		src_data2_dec = (mcsr_read_data | d_regs_read_data);
 	end
 	else if (alu_use_rs2)
 	begin

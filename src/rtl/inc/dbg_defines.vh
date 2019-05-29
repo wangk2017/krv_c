@@ -1,5 +1,5 @@
 `define DBUS_OP_WIDTH 		2	
-`define DBUS_ADDR_WIDTH 	5
+`define DBUS_ADDR_WIDTH 	6
 `define DBUS_DATA_WIDTH 	32
 `define DBUS_M_WIDTH 		`DBUS_OP_WIDTH + `DBUS_ADDR_WIDTH + `DBUS_DATA_WIDTH
 `define DBUS_S_WIDTH 		`DBUS_OP_WIDTH + `DBUS_DATA_WIDTH	
@@ -8,15 +8,15 @@
 `define DBUS_M_WIDTH_MINUS_1 	`DBUS_M_WIDTH - 1
 
 `define DM_REG_WIDTH		32
-`define DMSTATUS_ADDR		5'h11
-`define DMCONTROL_ADDR		5'h10
-`define HARTINFO_ADDR		5'h12
-`define ABSTRACTCS_ADDR		5'h16
-`define COMMAND_ADDR		5'h17
-`define DATA0_ADDR		5'h04
-`define SBCS_ADDR		5'h38
-`define SBADDR0_ADDR		5'h39
-`define SBDATA0_ADDR		5'h3c
+`define DMSTATUS_ADDR		6'h11
+`define DMCONTROL_ADDR		6'h10
+`define HARTINFO_ADDR		6'h12
+`define ABSTRACTCS_ADDR		6'h16
+`define COMMAND_ADDR		6'h17
+`define DATA0_ADDR		6'h04
+`define SBCS_ADDR		6'h38
+`define SBADDR0_ADDR		6'h39
+`define SBDATA0_ADDR		6'h3c
 
 
 //command format

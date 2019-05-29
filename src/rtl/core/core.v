@@ -94,8 +94,8 @@ input				dbg_reg_access,
 input 				dbg_wr1_rd0,
 input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
 input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
-output[`DATA_WIDTH - 1 : 0]	dbg_gprs_read_data,
-output[`DATA_WIDTH - 1 : 0]	dbg_csrs_read_data,
+output                     	dbg_read_data_valid,
+output[`DATA_WIDTH - 1 : 0]	dbg_read_data
 `endif
 
 
@@ -105,6 +105,17 @@ output[`DATA_WIDTH - 1 : 0]	dbg_csrs_read_data,
 //---------------------------------------------//
 //Wires declaration
 //---------------------------------------------//
+
+`ifdef KRV_HAS_DBG
+wire                     	dbg_gprs_read_data_valid;
+wire                     	dbg_csrs_read_data_valid;
+wire                     	dbg_t_regs_read_data_valid;
+wire[`DATA_WIDTH - 1 : 0]	dbg_gprs_read_data;
+wire[`DATA_WIDTH - 1 : 0]	dbg_csrs_read_data;
+wire[`DATA_WIDTH - 1 : 0]	dbg_t_regs_read_data;
+assign dbg_read_data = dbg_gprs_read_data | dbg_csrs_read_data | dbg_t_regs_read_data;
+assign dbg_read_data_valid = dbg_gprs_read_data_valid | dbg_csrs_read_data_valid | dbg_t_regs_read_data_valid;
+`endif
 
 wire 					jal_dec;
 wire 					jalr_ex;
@@ -150,6 +161,7 @@ wire 					mem_U_ex;
 wire [`DATA_WIDTH - 1 : 0] 		store_data_ex;
 wire 					only_src2_used_ex;	
 wire [`ADDR_WIDTH - 1 : 0] 		pc_ex;
+wire [`ADDR_WIDTH - 1 : 0]		mem_addr_ex;
 
 wire [`DATA_WIDTH - 1 : 0]		data_mem;				
 wire [`RD_WIDTH:0] 			rd_mem;
@@ -186,6 +198,7 @@ wire 					load_data_valid_wb;
  wire 					meie;		
  wire 					mtie;		
  wire [`ADDR_WIDTH - 1 : 0] 		mepc;		
+ wire [`ADDR_WIDTH - 1 : 0] 		dpc;		
  wire [`DATA_WIDTH - 1 : 0] 		mcause;	
  wire [`DATA_WIDTH - 1 : 0] 		mtval;	
  wire [`DATA_WIDTH - 1 : 0] 		mcsr_write_data;
@@ -201,6 +214,7 @@ wire [`ADDR_WIDTH - 1 : 0] 		fault_pc;
 wire 					trap;
 wire 					exception_met;
 wire 					ecall;
+wire 					ebreak;
 wire  [`ADDR_WIDTH - 1 : 0] 		vector_addr;
 wire 					mret;
 wire 					mepc_sel;
@@ -208,9 +222,11 @@ wire 					mcause_sel;
 wire 					mtval_sel;
 
 `ifdef KRV_HAS_DBG
+wire breakpoint;
 wire 					dret;
 wire					dbg_wr;
 wire 					dbg_mode;
+wire [`DATA_WIDTH - 1 : 0] 		d_regs_read_data;
 `endif
 
 wire [`INSTR_WIDTH - 1 : 0] 		illegal_instr;
@@ -307,6 +323,13 @@ fetch u_fetch(
 .imm_ex			(imm_ex),
 .imm_dec		(imm_dec),
 .mret			(mret),
+`ifdef KRV_HAS_DBG
+.ebreak			(ebreak),
+.breakpoint		(breakpoint),
+.dpc			(dpc),
+.dret			(dret),
+.dbg_mode		(dbg_mode	),
+`endif
 .pc_misaligned 		(pc_misaligned),
 .fault_pc		(fault_pc),
 .trap			(trap),
@@ -389,15 +412,21 @@ dec u_dec (
 .valid_interrupt	(valid_interrupt),
 .exception_met		(exception_met),
 .ecall			(ecall),
+.ebreak			(ebreak),
 .load_x0		(load_x0),
 .mret			(mret),
 .wfi			(wfi)
 `ifdef KRV_HAS_DBG
 ,
+.breakpoint		(breakpoint),
+.d_regs_read_data	(d_regs_read_data),
+.dret			(dret),
+.dbg_mode		(dbg_mode	),
 .dbg_reg_access		(dbg_reg_access	),
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
 .dbg_regno		(dbg_regno	),
 .dbg_write_data		(dbg_write_data	),
+.dbg_read_data_valid	(dbg_gprs_read_data_valid),
 .dbg_read_data		(dbg_gprs_read_data	)
 `endif
 
@@ -461,6 +490,12 @@ alu u_alu (
 .mem_U_mem		(mem_U_mem),
 .store_data_mem		(store_data_mem),
 .mem_addr_mem		(mem_addr_mem)
+`ifdef KRV_HAS_DBG
+,
+.breakpoint		(breakpoint),
+.dbg_mode		(dbg_mode	),
+.mem_addr_ex		(mem_addr_ex	)
+`endif
 );
 
 //-----------------------------------------------------//
@@ -577,12 +612,18 @@ mcsr u_mcsr(
 .dtcm_start_addr	(dtcm_start_addr)
 `ifdef KRV_HAS_DBG
 ,
+.pc_ex			(pc_ex),
+.pc_dec			(pc_dec),
+.breakpoint		(breakpoint),
+.ebreak			(ebreak),
+.dpc			(dpc),
 .dbg_mode		(dbg_mode	),
 .dbg_reg_access		(dbg_reg_access	),
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
 .dbg_regno		(dbg_regno	),
 .dbg_wr			(dbg_wr		),
 .dbg_write_data		(dbg_write_data	),
+.dbg_read_data_valid	(dbg_csrs_read_data_valid),
 .dbg_read_data		(dbg_csrs_read_data	)
 `endif
 
@@ -631,9 +672,88 @@ trap_ctrl u_trap_ctrl (
 ,
 .dbg_wr			(dbg_wr		),
 .dbg_write_data		(dbg_write_data	),
+.dbg_mode		(dbg_mode	)
 `endif
 );
 
+`ifdef KRV_HAS_DBG
+//-----------------------------------------------------//
+//trigger_regs
+//-----------------------------------------------------//
+wire [`DATA_WIDTH - 1 : 0] mctrl_rd_data;
+wire 			   tselect;
+wire [`DATA_WIDTH - 1 : 0] tdata1;
+wire [`DATA_WIDTH - 1 : 0] tdata2_t0;
+wire [`DATA_WIDTH - 1 : 0] tdata3_t0;
+wire [`DATA_WIDTH - 1 : 0] tdata2_t1;
+wire [`DATA_WIDTH - 1 : 0] tdata3_t1;
+
+
+trigger_regs u_trigger_regs(
+.cpu_clk		(cpu_clk),		
+.cpu_rstn		(cpu_rstn),	
+.csr_addr		(mcsr_addr),
+.mcsr_rd		(mcsr_rd),
+.mcsr_wr		(mcsr_wr),
+.valid_mcsr_rd		(valid_mcsr_rd),
+.valid_mcsr_wr		(valid_mcsr_wr),
+.mcsr_set		(mcsr_set),
+.mcsr_clr		(mcsr_clr),
+.write_data		(mcsr_write_data),
+.read_data		(d_regs_read_data),
+.tselect		(tselect      ),
+.tdata1			(tdata1	      ),
+.tdata2_t0		(tdata2_t0    ),
+.tdata3_t0		(tdata3_t0    ),
+.tdata2_t1		(tdata2_t1    ),
+.tdata3_t1		(tdata3_t1    ),
+.mctrl_rd_data		(mctrl_rd_data),
+.dbg_mode		(dbg_mode	),
+.dbg_reg_access		(dbg_reg_access	),
+.dbg_wr1_rd0		(dbg_wr1_rd0	),
+.dbg_regno		(dbg_regno	),
+.dbg_wr			(dbg_wr		),
+.dbg_write_data		(dbg_write_data	),
+.dbg_read_data_valid	(dbg_t_regs_read_data_valid),
+.dbg_read_data		(dbg_t_regs_read_data	)
+);
+
+
+//-----------------------------------------------------//
+//hw_triggers
+//-----------------------------------------------------//
+
+hw_triggers u_hw_triggers(
+.cpu_clk		(cpu_clk),		
+.cpu_rstn		(cpu_rstn),	
+.tselect		(tselect      ),
+.tdata1			(tdata1	      ),
+.tdata2_t0		(tdata2_t0    ),
+.tdata3_t0		(tdata3_t0    ),
+.tdata2_t1		(tdata2_t1    ),
+.tdata3_t1		(tdata3_t1    ),
+.mctrl_rd_data		(mctrl_rd_data),
+.pc_ex			(pc_ex),
+.load_ex		(load_ex),
+.store_ex		(store_ex),
+.mem_addr_ex		(mem_addr_ex),
+.dbg_mode		(dbg_mode	),
+.breakpoint		(breakpoint)
+);
+
+
+//-----------------------------------------------------//
+//dbg_mode_ctrl
+//-----------------------------------------------------//
+dbg_mode_ctrl u_dbg_mode_ctrl (
+.cpu_clk		(cpu_clk),		
+.cpu_rstn		(cpu_rstn),	
+.breakpoint		(breakpoint),
+.ebreak			(ebreak),
+.dret			(dret),
+.dbg_mode		(dbg_mode)
+);
+`endif
 
 
 endmodule

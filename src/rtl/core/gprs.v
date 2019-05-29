@@ -46,6 +46,7 @@ input				dbg_reg_access,
 input 				dbg_wr1_rd0,
 input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
 input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
+output				dbg_read_data_valid,
 output[`DATA_WIDTH - 1 : 0]	dbg_read_data
 `endif
 
@@ -58,6 +59,7 @@ output[`DATA_WIDTH - 1 : 0]	dbg_read_data
 wire dbg_gprs_range = (dbg_regno >= 16'h1000) && (dbg_regno <= 16'h101f);
 wire dbg_wr = dbg_reg_access && dbg_wr1_rd0 && dbg_gprs_range;
 wire dbg_rd = dbg_reg_access && !dbg_wr1_rd0 && dbg_gprs_range;
+assign dbg_read_data_valid = dbg_rd;
 assign dbg_read_data = dbg_rd ? gprs_X[dbg_regno[4:0]] : 32'h0;
 `else
 wire dbg_wr = 1'b0;

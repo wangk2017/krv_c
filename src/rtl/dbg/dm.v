@@ -19,8 +19,8 @@
 // History:   		2019.05.12				||
 //                      First version				||
 //===============================================================
-`include "core_defines"
-`include "dbg_defines"
+`include "core_defines.vh"
+`include "dbg_defines.vh"
 
 module dm(
 //global signals
@@ -42,21 +42,28 @@ output				dbg_reg_access,
 output 				dbg_wr1_rd0,
 output[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
 output [`DATA_WIDTH - 1 : 0]	dbg_write_data,
+input 				dbg_read_data_valid,
 input [`DATA_WIDTH - 1 : 0]	dbg_read_data
 
 );
 
 
 //wires declaration
-wire [`DM_REG_WIDTH - 1 : 0]	command,
-wire 				cmd_update,
+wire [`DM_REG_WIDTH - 1 : 0]	command;
+wire [`DM_REG_WIDTH - 1 : 0]	data0;
+wire 				cmd_update;
+wire				cmd_finished;
+wire [`DATA_WIDTH - 1 : 0]	cmd_read_data;
 
 //sub-modules
 dm_regs u_dm_regs (
 .sys_clk		(sys_clk	),
 .sys_rstn		(sys_rstn	),
+.data0			(data0	),
 .command		(command	),
 .cmd_update		(cmd_update	),
+.cmd_finished		(cmd_finished		),
+.cmd_read_data		(cmd_read_data		),
 .dtm_req_valid		(dtm_req_valid	),
 .dtm_req_ready		(dtm_req_ready	),
 .dtm_req_bits		(dtm_req_bits	),
@@ -69,12 +76,17 @@ dm_regs u_dm_regs (
 abs_cmd u_abs_cmd(
 .sys_clk		(sys_clk		),
 .sys_rstn		(sys_rstn		),
+.data0			(data0	),
 .command		(command		),
 .cmd_update		(cmd_update		),
+.cmd_finished		(cmd_finished		),
+.cmd_read_data		(cmd_read_data		),
 .valid_reg_access	(dbg_reg_access		),
 .wr1_rd0		(dbg_wr1_rd0		),
+.regno			(dbg_regno		),
 .write_data		(dbg_write_data		),
-.regno			(dbg_regno		)
+.read_data_valid	(dbg_read_data_valid	),
+.read_data		(dbg_read_data		)
 );
 
 

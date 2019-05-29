@@ -59,11 +59,11 @@ all_rv32m_hex: rv32m/div.hex rv32m/divu.hex rv32m/mul.hex rv32m/mulh.hex rv32m/m
 all_riscv_hex: riscv/add.hex riscv/bne.hex riscv/or.hex riscv/sltu.hex riscv/addi.hex riscv/fence_i.hex riscv/ori.hex riscv/sra.hex riscv/and.hex riscv/jal.hex riscv/sb.hex riscv/srai.hex riscv/andi.hex riscv/jalr.hex riscv/sh.hex riscv/srl.hex riscv/auipc.hex  riscv/lb.hex riscv/simple.hex  riscv/srli.hex riscv/beq.hex riscv/lbu.hex riscv/sll.hex riscv/sub.hex riscv/bge.hex riscv/lh.hex riscv/slli.hex riscv/sw.hex riscv/bgeu.hex riscv/lhu.hex riscv/slt.hex riscv/xor.hex riscv/blt.hex riscv/lui.hex riscv/slti.hex riscv/xori.hex riscv/bltu.hex riscv/lw.hex riscv/sltiu.hex
 
 comp:
-	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_m_tb.v ./tb/rom.v ./src/rtl/*/*.v
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 
 veri:
-	verilator -Wall +incdir+./tb +incdir+./tb/sim_inc --cc ./tb/rom.v ./verification/krv_m_tb.v ./src/rtl/*/*.v  ./src/Actel_DirectCore/*.v --exe ./verification/sim_main.cpp
-	make -j -C obj_dir -f Vkrv_m_tb.mk Vkrv_m_tb
+	verilator -Wall +incdir+./tb +incdir+./tb/sim_inc --cc ./tb/rom.v ./verification/krv_c_tb.v ./src/rtl/*/*.v  ./src/Actel_DirectCore/*.v --exe ./verification/sim_main.cpp
+	make -j -C obj_dir -f Vkrv_c_tb.mk Vkrv_c_tb
 
 csr.%.sim: hex_file/csr/%.hex 
 	cp $< hex_file/run.hex

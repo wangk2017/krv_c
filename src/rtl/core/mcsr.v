@@ -70,12 +70,18 @@ output reg [`ADDR_WIDTH - 1 : 0] dtcm_start_addr	//dtcm start address
 `ifdef KRV_HAS_DBG
 //debug interface
 ,
+input wire [`ADDR_WIDTH - 1 : 0] pc_ex,			// Program counter value at EX stage
+input wire [`ADDR_WIDTH - 1 : 0] pc_dec,		// Program counter value at DEC stage
+
+input					breakpoint,
+input					ebreak,
 output reg [`ADDR_WIDTH - 1 : 0]	dpc,
 input					dbg_mode,
 input					dbg_reg_access,
 input 					dbg_wr1_rd0,
 input[`CMD_REGNO_SIZE - 1 : 0]		dbg_regno,
 input[`DATA_WIDTH - 1 : 0]		dbg_write_data,
+output                     		dbg_read_data_valid,
 output[`DATA_WIDTH - 1 : 0]		dbg_read_data,
 output					dbg_wr
 `endif
@@ -92,6 +98,7 @@ wire dbg_csrs_access = dbg_reg_access && dbg_csrs_range;
 assign dbg_wr = dbg_wr1_rd0  && dbg_csrs_access;
 wire dbg_rd = !dbg_wr1_rd0 && dbg_csrs_access;
 wire dbg_addr = dbg_regno[11:0];
+assign dbg_read_data_valid = dbg_rd;
 assign dbg_read_data = dbg_rd ? read_data : 32'h0;
 `else
 wire dbg_wr = 1'b0;
@@ -116,9 +123,9 @@ wire mstatus_sel 	= (csr_access_addr == `MSTATUS_ADDR);
 wire misa_sel 		= (csr_access_addr == `MISA_ADDR);
 wire mie_sel 		= (csr_access_addr == `MIE_ADDR);
 wire mtvec_sel 		= (csr_access_addr == `MTVEC_ADDR);
-wire mepc_sel 		= (csr_access_addr == `MEPC_ADDR);
-wire mcause_sel 	= (csr_access_addr == `MCAUSE_ADDR);
-wire mtval_sel 		= (csr_access_addr == `MTVAL_ADDR);
+assign mepc_sel 		= (csr_access_addr == `MEPC_ADDR);
+assign mcause_sel 	= (csr_access_addr == `MCAUSE_ADDR);
+assign mtval_sel 		= (csr_access_addr == `MTVAL_ADDR);
 wire mip_sel 		= (csr_access_addr == `MIP_ADDR);
 wire tcm_ctrl_sel	= (csr_access_addr == `TCM_CTRL_ADDR);
 wire dtcm_start_addr_sel	= (csr_access_addr == `DTCM_START_ADDR_ADDR);
@@ -588,12 +595,13 @@ always @ *
 begin
 	if(breakpoint)
 	cause = 3'h4;
-	else if (ebreak_met)
+	else if (ebreak)
 	cause = 3'h3;
-	else if(resethaltreq)
+/*	else if(resethaltreq)
 	cause = 3'h2;
 	else if(haltreq)
 	cause = 1'b1;
+*/
 	else if(step)
 	cause = 1'b0;
 end
@@ -607,7 +615,7 @@ always @ (posedge cpu_clk or negedge cpu_rstn)
 begin
 	if(!cpu_rstn)
 	begin
-		dpc <= boot_addr;
+		dpc <= {`ADDR_WIDTH{1'b0}};
 	end
 	else
 	begin
@@ -615,10 +623,12 @@ begin
 		begin
 			dpc <= pc_ex;
 		end
-		else if (ebreak_met)
+		else if (ebreak)
 			dpc <= pc_dec;
+/*
 		else if(resethaltreq || haltreq)
 			dpc <= pc_ex;
+*/
 		else if(step)
 			dpc <= pc_dec;
 		else if(dbg_mode)
@@ -655,8 +665,7 @@ assign read_data = {`DATA_WIDTH{valid_mcsr_rd || dbg_rd}} &
 			`ifdef KRV_HAS_DBG
 			|
 			dcsr_rd_data |
-			dpc_rd_data |
-			dscratch_rd_data
+			dpc_rd_data 
 			`endif
 	   		);
 

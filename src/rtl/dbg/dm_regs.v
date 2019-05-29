@@ -19,8 +19,8 @@
 // History:   		2019.05.21				||
 //                      First version				||
 //===============================================================
-`include "core_defines"
-`include "dbg_defines"
+`include "core_defines.vh"
+`include "dbg_defines.vh"
 
 module dm_regs(
 //global signals
@@ -31,6 +31,8 @@ input				sys_rstn,
 output reg [`DM_REG_WIDTH - 1 : 0]	data0,
 output reg [`DM_REG_WIDTH - 1 : 0]	command,
 output reg 				cmd_update,
+input 					cmd_finished,
+input [`DATA_WIDTH - 1 : 0]		cmd_read_data,
 
 //DTM interface
 input				dtm_req_valid,
@@ -122,7 +124,33 @@ end
 wire [`DM_REG_WIDTH - 1 : 0] command_read_data;
 assign command_read_data = command_sel ? command : {`DM_REG_WIDTH{1'b0}};
 
+//dm regs read
+wire dm_regs_read_data = {`DATA_WIDTH{dm_reg_rd}} &
+				(data0_read_data |
+				 command_read_data
+				);
 
+//handshake with dtm
+reg cmd_outstanding;
+always @ (posedge sys_clk or negedge sys_rstn)
+begin
+	if (!sys_rstn)
+	begin
+		cmd_outstanding <= 1'b0;
+	end
+	else 
+	begin
+		if(cmd_finished)
+		cmd_outstanding <= 1'b0;
+		else if(command_sel && dm_reg_wr)
+		cmd_outstanding <= 1'b1;
+	end
+end
+
+assign dtm_req_ready = !cmd_outstanding;
+
+assign dm_resp_valid = cmd_finished || dm_reg_rd;
+assign dm_resp_bits = {dm_access_op,dm_regs_read_data | cmd_read_data};
 
 
 endmodule

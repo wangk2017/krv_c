@@ -84,6 +84,12 @@ output reg mem_B_mem,					// byte access at MEM stage
 output reg mem_U_mem,					// unsigned load halfword/byte at MEM stage
 output reg [`DATA_WIDTH - 1 : 0] store_data_mem,	// store data at MEM stage
 output wire [`ADDR_WIDTH - 1 : 0] mem_addr_mem		// memory address at MEM stage
+`ifdef KRV_HAS_DBG
+,
+input wire dbg_mode,
+`endif
+
+
 );
 
 
@@ -313,6 +319,12 @@ assign alu_result_ex = (only_src2_used_ex ? src_data2_ex : alu_result);
 //--------------------------------------------------------------------------------//
 //propagate from EX to MEM stage
 //--------------------------------------------------------------------------------//
+`ifdef KRV_HAS_DBG
+wire flush_ex = breakpoint;
+`else 
+wire flush_ex = 1'b0;
+`endif
+
 wire ex_bubble = !dec_valid || ex_stall;
 always@(posedge cpu_clk or negedge cpu_rstn)
 begin
@@ -323,7 +335,12 @@ begin
 	end
 	else
 	begin
-	   	if(mem_ready)
+		if(flush_ex)
+		begin
+			ex_valid <= 1'b0;
+			alu_result_mem <= {`DATA_WIDTH{1'b0}};
+		end
+	   	else if(mem_ready)
 	   	begin
 	   	     	ex_valid <= 1'b1;           
 			if(ex_bubble)
@@ -353,9 +370,7 @@ begin
 	end
 	else
 	begin
-	   if(mem_ready)
-	   begin
-		if(ex_bubble)
+		if(flush_ex)
 		begin
 			rd_mem <= 32;
 			load_mem <= 1'b0;
@@ -365,17 +380,29 @@ begin
 			mem_U_mem <= 1'b0;
 			store_data_mem <= {`DATA_WIDTH{1'b0}};
 		end
-		else
-		begin
-			rd_mem <= rd_ex;
-			load_mem <= load_ex;
-			store_mem <= store_ex;
-			mem_H_mem <= mem_H_ex;
-			mem_B_mem <= mem_B_ex;
-			mem_U_mem <= mem_U_ex;
-			store_data_mem <= store_data_ex;
-		end
-	   end
+	   	else if(mem_ready)
+	   	begin
+	   	     if(ex_bubble)
+	   	     begin
+	   	     	rd_mem <= 32;
+	   	     	load_mem <= 1'b0;
+	   	     	store_mem <= 1'b0;
+	   	     	mem_H_mem <= 1'b0;
+	   	     	mem_B_mem <= 1'b0;
+	   	     	mem_U_mem <= 1'b0;
+	   	     	store_data_mem <= {`DATA_WIDTH{1'b0}};
+	   	     end
+	   	     else
+	   	     begin
+	   	     	rd_mem <= rd_ex;
+	   	     	load_mem <= load_ex;
+	   	     	store_mem <= store_ex;
+	   	     	mem_H_mem <= mem_H_ex;
+	   	     	mem_B_mem <= mem_B_ex;
+	   	     	mem_U_mem <= mem_U_ex;
+	   	     	store_data_mem <= store_data_ex;
+	   	     end
+	   	end
 	end
 end
 
@@ -399,7 +426,11 @@ assign branch_bltu_taken = bltu_ex & (ucom_result);
 assign branch_bgeu_taken = bgeu_ex & (!ucom_result);
 assign branch_taken_ex = branch_beq_taken | branch_bne_taken | branch_blt_taken | branch_bge_taken | branch_bltu_taken | branch_bgeu_taken;
 
-wire ex_stall = (div_start && !div_done);
+wire ex_stall = (div_start && !div_done) 
+`ifdef KRV_HAS_DBG
+||dbg_mode
+`endif
+;
 assign ex_ready = !ex_stall && mem_ready;
 
 wire [31:0] ex_stall_cnt;

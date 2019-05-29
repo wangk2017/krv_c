@@ -56,6 +56,11 @@ input wire [`INSTR_WIDTH - 1 : 0] instr_read_data, 	// instruction from imem
 //interface with trap_ctrl
 output reg [`ADDR_WIDTH - 1 : 0] pc,	
 input wire mret,					// mret
+`ifdef KRV_HAS_DBG
+input wire dbg_mode,					// dbg_mode
+input wire dret,					// dret
+input wire [`ADDR_WIDTH - 1 : 0] dpc,			// dpc for return from debug
+`endif
 output wire pc_misaligned,				// pc misaligned condition found at IF stage
 output wire [`ADDR_WIDTH - 1 : 0] fault_pc,		// the misaligned pc recorded at IF stage
 input wire trap,					// trap (interrupt or exception) 
@@ -176,9 +181,18 @@ wire  [`ADDR_WIDTH - 1 : 0] addr_adder_res_c = addr_adder_res;
 //--------------------------------------------------------------------------------------//
 //propagate from IF to DEC stage
 //--------------------------------------------------------------------------------------//
+`ifdef KRV_HAS_DBG
+wire if_stall = dbg_mode;
+`else
 wire if_stall = 1'b0;
+`endif
+
 assign if_bubble = !instr_read_data_valid || if_stall;
-wire flush_if = jal_dec_r || jalr_ex_r || branch_taken_ex || branch_taken_ex_r || trap | mret || mret_r;
+wire flush_if = jal_dec_r || jalr_ex_r || branch_taken_ex || branch_taken_ex_r || trap | mret || mret_r
+`ifdef KRV_HAS_DBG
+|| ebreak || breakpoint
+`endif
+;
 wire jump = jal_dec || jalr_ex || ((jal_dec_r || jalr_ex_r) && !instr_read_data_valid);
 
 always @ (posedge cpu_clk or negedge cpu_rstn)
@@ -250,10 +264,21 @@ begin
 	end
 end
 
-wire keep_pc = fence_dec || (fence_dec_r && !instr_read_data_valid) || !dec_ready || !instr_read_data_valid ;
+wire keep_pc = fence_dec || (fence_dec_r && !instr_read_data_valid) || !dec_ready || !instr_read_data_valid;
 
 always @*
 begin
+`ifdef KRV_HAS_DBG
+	if(dret)
+	begin
+		next_pc = dpc;
+	end
+	else if(dbg_mode)		//halt during dbg_mode
+	begin
+		next_pc = pc;
+	end
+	else
+`endif 
 	if(trap)
 	begin
 		next_pc = vector_addr;

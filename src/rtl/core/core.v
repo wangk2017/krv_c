@@ -206,8 +206,11 @@ wire 					mret;
 wire 					mepc_sel;
 wire 					mcause_sel;
 wire 					mtval_sel;
+
 `ifdef KRV_HAS_DBG
+wire 					dret;
 wire					dbg_wr;
+wire 					dbg_mode;
 `endif
 
 wire [`INSTR_WIDTH - 1 : 0] 		illegal_instr;
@@ -232,9 +235,6 @@ wire 					wb_ready;
 
 wire 					comb_rstn;
 
-`ifdef KRV_HAS_DBG
-wire 					dbg_mode;
-`endif
 //===========================================================================//
 //There are below blocks in the core
 //--reset_comb

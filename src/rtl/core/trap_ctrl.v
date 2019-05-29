@@ -46,6 +46,7 @@ output reg  [`ADDR_WIDTH - 1 : 0] vector_addr,		//vector address
 //interface with dec
 input wire load_x0,					//load x0 exception
 input wire ecall,
+input wire instr_illegal,
 input wire valid_mcsr_rd,				//valid mcsr read
 input wire valid_mcsr_wr,				//valid mcsr write
 input wire mcsr_set,					//mcsr set
@@ -77,6 +78,7 @@ output reg [`DATA_WIDTH - 1 : 0] mtval			//mtval
 //debug interface
 ,
 input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
+input				dbg_mode,
 input				dbg_wr
 `endif
 
@@ -173,7 +175,10 @@ begin
 				mepc <= write_data;
 			end
 		end
-		else				//hardware control
+		else 		//hardware control
+		`ifdef KRV_HAS_DBG
+		if(!dbg_mode)
+		`endif
 		begin
 			if(exception_met)	//exception condition
 			begin
@@ -231,6 +236,9 @@ begin
 			end
 		end
 		else
+		`ifdef KRV_HAS_DBG
+		if(!dbg_mode)
+		`endif
 		begin
 			if(exception_met)	//exception condition
 			begin
@@ -299,6 +307,9 @@ begin
 			end
 		end
 		else
+		`ifdef KRV_HAS_DBG
+		if(!dbg_mode)
+		`endif
 		begin
 			if(exception_met)	//exception condition
 			begin
@@ -357,7 +368,11 @@ assign valid_ex_int = mstatus_mie && meie && meip;
 assign valid_timer_int = mstatus_mie && mtie && mtip;
 //FIXME
 //assign valid_timer_int = 1'b0;
-assign exception_met = pc_misaligned | load_x0 | csr_illegal_access | ecall;
-assign trap = exception_met | valid_interrupt;
+assign exception_met = pc_misaligned | load_x0 | csr_illegal_access | ecall | instr_illegal;
+assign trap = (exception_met | valid_interrupt)
+`ifdef KRV_HAS_DBG
+&& !dbg_mode
+`endif
+;
 
 endmodule

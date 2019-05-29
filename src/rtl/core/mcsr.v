@@ -70,13 +70,14 @@ output reg [`ADDR_WIDTH - 1 : 0] dtcm_start_addr	//dtcm start address
 `ifdef KRV_HAS_DBG
 //debug interface
 ,
-input				dbg_mode,
-input				dbg_reg_access,
-input 				dbg_wr1_rd0,
-input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
-input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
-output[`DATA_WIDTH - 1 : 0]	dbg_read_data,
-output				dbg_wr
+output reg [`ADDR_WIDTH - 1 : 0]	dpc,
+input					dbg_mode,
+input					dbg_reg_access,
+input 					dbg_wr1_rd0,
+input[`CMD_REGNO_SIZE - 1 : 0]		dbg_regno,
+input[`DATA_WIDTH - 1 : 0]		dbg_write_data,
+output[`DATA_WIDTH - 1 : 0]		dbg_read_data,
+output					dbg_wr
 `endif
 
 );
@@ -612,15 +613,12 @@ begin
 	begin
 		if(breakpoint)
 		begin
-			if(timing)
-			dpc <= pc;
-			else
-			dpc <= pc_dec;
+			dpc <= pc_ex;
 		end
 		else if (ebreak_met)
 			dpc <= pc_dec;
 		else if(resethaltreq || haltreq)
-			dpc <= pc_dec;
+			dpc <= pc_ex;
 		else if(step)
 			dpc <= pc_dec;
 		else if(dbg_mode)

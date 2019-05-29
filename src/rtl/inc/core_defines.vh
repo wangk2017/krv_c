@@ -71,6 +71,8 @@
 `define FUNCT7_010_0000   7'b0100000
 `define FUNCT7_000_0001   7'b0000001
 
+//DRET
+`define DRET	32'h7b200073
 
 //CSRs
 `define MVENDORID_ADDR 		12'hF11

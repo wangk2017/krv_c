@@ -42,6 +42,10 @@ output wire jal_dec,						// jal
 output reg signed [`DATA_WIDTH - 1 : 0] imm_ex,			// imm at EX stage
 output wire signed [`DATA_WIDTH - 1 : 0] imm_dec,		// imm at DEC stage
 output wire mret,						// mret
+`ifdef KRV_HAS_DBG
+input wire dbg_mode,
+output wire dret,
+`endif
 
 //interface with alu
 output reg dec_valid,
@@ -103,6 +107,7 @@ input wire exception_met,					// exception condition met
 output wire load_x0,						// load x0 exception
 output wire ecall,						// ecall instruction
 output wire ebreak,						// ebreak instruction
+output wire instr_illegal,					// illegal instruction exception
 
 //interface with mcsr block
 output wire mcsr_rd,						// valid mcsr read signal
@@ -493,7 +498,11 @@ end
 //---------------------------------------------------------------------------//
 wire dec_bubble = !if_valid || dec_stall;
 //dec flush condition
-wire flush_dec = branch_taken_ex || jalr_ex || exception_met ;
+wire flush_dec = branch_taken_ex || jalr_ex || exception_met
+`ifdef KRV_HAS_DBG
+|| breakpoint
+`endif
+;
 
 always @ (posedge cpu_clk or negedge cpu_rstn)
 begin
@@ -807,8 +816,22 @@ end
 //return instruction for trap
 assign mret = (instruction_is_system && funct12_mret && funct3_000) && !branch_taken_ex;
 
+//return from debug
+`ifdef KRV_HAS_DBG
+assign dret = (valid_instr == `DRET) && dbg_mode;
+wire illegal_dret = (valid_instr == `DRET) && !dbg_mode;
+`else 
+wire illegal_dret = 1'b0;
+
+`endif
+assign instr_illegal = illegal_dret;
+
 //ecall
-assign  ecall = instruction_is_ecall_brk && funct3_000 && funct12_ecall;
+assign  ecall = (instruction_is_ecall_brk && funct3_000 && funct12_ecall)
+`ifdef KRV_HAS_DBG
+&& !dbg_mode
+`endif
+;
 
 //ebreak
 assign  ebreak = instruction_is_ecall_brk && funct3_000 && funct12_ebreak;
@@ -819,7 +842,11 @@ reg wfi_delay2;
 reg wfi_stall_delay;
 
 wire wfi_i;
-assign wfi_i =  (instruction_is_system && funct12_wfi && funct3_000) && !branch_taken_ex;
+assign wfi_i =  ((instruction_is_system && funct12_wfi && funct3_000) && !branch_taken_ex)
+`ifdef KRV_HAS_DBG
+&& !dbg_mode
+`endif
+;
 //wait for the previous instruction completed
 always @ (posedge cpu_clk or negedge cpu_rstn)
 begin
@@ -992,7 +1019,11 @@ end
 assign fence_stall = fence_d1;
 
 //stall condition met in DEC stage
-assign dec_stall = wfi_stall || load_hazard_stall || fence_stall;
+assign dec_stall = wfi_stall || load_hazard_stall || fence_stall
+`ifdef KRV_HAS_DBG
+|| dbg_mode
+`endif
+;
 assign dec_ready = !dec_stall && (ex_ready);
 
 //performance counter

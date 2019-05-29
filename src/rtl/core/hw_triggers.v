@@ -44,7 +44,7 @@ input load_ex,
 input store_ex,
 input [`ADDR_WIDTH - 1 : 0] mem_addr_ex
 
-
+input dbg_mode,
 output reg breakpoint,		//enter debug mode
 output reg breakpoint_exp,	//just a breakpoint exception
 
@@ -84,13 +84,13 @@ begin
 	begin
 		case {trigger_type)
 		3'b001: begin			//load
-			if(load_mem && (mem_addr_mem == tdata2_t0))
+			if(load_ex && (mem_addr_ex == tdata2_t0))
 			trigger0 = 1'b1;
 			else
 			trigger0 = 1'b0;
 		end
 		3'b010: begin			//store
-			if(store_mem && (mem_addr_mem == tdata2_t0))
+			if(store_ex && (mem_addr_ex == tdata2_t0))
 			trigger0 = 1'b1;
 			else
 			trigger0 = 1'b0;
@@ -116,13 +116,13 @@ begin
 	begin
 		case {trigger_type)
 		3'b001: begin			//load
-			if(load_mem && (mem_addr_mem == tdata2_t1))
+			if(load_ex && (mem_addr_ex == tdata2_t1))
 			trigger1 = 1'b1;
 			else
 			trigger1 = 1'b0;
 		end
 		3'b010: begin			//store
-			if(store_mem && (mem_addr_mem == tdata2_t1))
+			if(store_ex && (mem_addr_ex == tdata2_t1))
 			trigger1 = 1'b1;
 			else
 			trigger1 = 1'b0;

@@ -101,6 +101,7 @@ wire dbg_addr = dbg_regno[11:0];
 assign dbg_read_data_valid = dbg_rd;
 assign dbg_read_data = dbg_rd ? read_data : 32'h0;
 `else
+wire dbg_csrs_access = 1'b0;
 wire dbg_wr = 1'b0;
 wire dbg_rd = 1'b0;
 wire [`DATA_WIDTH - 1 : 0]	dbg_write_data = 32'h0;

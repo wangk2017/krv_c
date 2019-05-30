@@ -479,7 +479,11 @@ begin
 	end
 	else if(mcsr_rd)
 	begin
-		src_data2_dec = (mcsr_read_data | d_regs_read_data);
+		src_data2_dec = (mcsr_read_data
+`ifdef KRV_HAS_DBG
+ | d_regs_read_data
+`endif
+);
 	end
 	else if (alu_use_rs2)
 	begin

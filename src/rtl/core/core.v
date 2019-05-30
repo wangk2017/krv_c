@@ -214,6 +214,7 @@ wire [`ADDR_WIDTH - 1 : 0] 		fault_pc;
 wire 					trap;
 wire 					exception_met;
 wire 					ecall;
+wire 					instr_illegal;
 wire 					ebreak;
 wire  [`ADDR_WIDTH - 1 : 0] 		vector_addr;
 wire 					mret;
@@ -413,6 +414,7 @@ dec u_dec (
 .exception_met		(exception_met),
 .ecall			(ecall),
 .ebreak			(ebreak),
+.instr_illegal		(instr_illegal),
 .load_x0		(load_x0),
 .mret			(mret),
 .wfi			(wfi)
@@ -667,6 +669,7 @@ trap_ctrl u_trap_ctrl (
 .trap			(trap),
 .exception_met		(exception_met),
 .ecall			(ecall),
+.instr_illegal		(instr_illegal),
 .vector_addr		(vector_addr)
 `ifdef KRV_HAS_DBG
 ,

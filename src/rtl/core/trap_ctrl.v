@@ -85,6 +85,13 @@ input				dbg_wr
 
 );
 
+`ifndef KRV_HAS_DBG
+wire [`DATA_WIDTH - 1 : 0]	dbg_write_data = {`DATA_WIDTH{1'b0}};
+wire 				dbg_mode = 1'b0;
+wire 				dbg_wr = 1'b0;
+`endif
+
+
 
 //-----------------------------------------------//
 //synchronize the external interrupt from KPLIC

@@ -1,5 +1,7 @@
 //`define RISCV
-`define ZEPHYR
+`define BREAKPOINT
+//`define DBG_REF
+//`define ZEPHYR
 //`define ZEPHYR_SYNC
 //`define ZEPHYR_PHIL
 //`define TESTN

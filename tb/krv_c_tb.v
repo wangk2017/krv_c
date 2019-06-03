@@ -51,6 +51,14 @@ wire [31:0] dec_pc = DUT.u_core.u_fetch.pc_dec;
 `include "zephyr_sync_debug.v"
 `endif
 
+`ifdef DBG_REF
+`include "dbg_ref_value.v"
+`endif
+
+`ifdef BREAKPOINT
+`include "break_debug.v"
+`endif
+
 wire test_end;
 `ifdef RISCV
 assign test_end = (dec_pc == 32'h48);

@@ -23,6 +23,10 @@ pg/%.hex: tests/extra_tests/pg_ctrl/pg_ctrl-m-% firmware/makehex.py
 	python firmware/makehex.py $< > hex_file/$@
 	sed -i "1,1024d" hex_file/$@
 
+dbg/%.hex: tests/extra_tests/dbg/debug-m-% firmware/makehex.py
+	python firmware/makehex.py $< > hex_file/$@
+	sed -i "1,1024d" hex_file/$@
+
 dhrystone.hex:  /home/kitty/open-sources/RISC-V-CORES/VexRiscvSoftcoreContest2018/software/dhrystone/up5kPerf/build/dhrystone.elf firmware/makehex.py
 	python firmware/makehex.py $< > hex_file/$@
 	sed -i "1,1024d" hex_file/$@
@@ -31,6 +35,8 @@ hack_hex: dhrystone.hex
 	sed -i "1636,2047d" hex_file/$<
 
 all_pg_hex: pg/simple.hex
+
+all_dbg_hex: dbg/simple.hex
 
 
 int/%.hex: tests/extra_tests/int/kplic-m-% firmware/makehex.py
@@ -125,6 +131,11 @@ riscv.%.sim: hex_file/riscv/%.hex
 
 all_riscv_tests: riscv.add.sim riscv.bne.sim riscv.or.sim riscv.sltu.sim riscv.addi.sim riscv.fence_i.sim riscv.ori.sim riscv.sra.sim riscv.and.sim riscv.jal.sim riscv.sb.sim riscv.srai.sim riscv.andi.sim riscv.jalr.sim riscv.sh.sim riscv.srl.sim riscv.auipc.sim  riscv.lb.sim riscv.simple.sim  riscv.srli.sim riscv.beq.sim riscv.lbu.sim riscv.sll.sim riscv.sub.sim riscv.bge.sim riscv.lh.sim riscv.slli.sim riscv.sw.sim riscv.bgeu.sim riscv.lhu.sim riscv.slt.sim riscv.xor.sim riscv.blt.sim riscv.lui.sim riscv.slti.sim riscv.xori.sim riscv.bltu.sim riscv.lw.sim riscv.sltiu.sim
 
+dbg.%.sim: hex_file/dbg/%.hex
+	cp $< hex_file/run.hex
+	vvp -l out/$@ -v -n ./out/krv -lxt2
+	cp out/krv.vcd out/krv.lxt
+
 update_fpga:
 	cp src/Actel_DirectCore/*.v ./fpga/hdl/
 	cp src/rtl/*/*.* ./fpga/hdl/
@@ -143,5 +154,6 @@ clean:
 	rm -vrf ./out/*.sim
 	rm -vrf ./out/krv*
 	rm -vrf ./out/uart*
+	rm -vrf ./out/*.txt
 
 .PHONY: all

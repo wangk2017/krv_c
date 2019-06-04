@@ -55,8 +55,12 @@ wire [31:0] dec_pc = DUT.u_core.u_fetch.pc_dec;
 `include "dbg_ref_value.v"
 `endif
 
-`ifdef BREAKPOINT
+`ifdef EBREAK
 `include "break_debug.v"
+`endif
+
+`ifdef BREAKPOINT
+`include "breakpoint_debug.v"
 `endif
 
 wire test_end;

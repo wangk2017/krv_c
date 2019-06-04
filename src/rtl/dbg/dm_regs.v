@@ -49,7 +49,7 @@ wire [`DBUS_M_WIDTH - 1 : 0]		valid_dtm_req = dtm_req_valid ? dtm_req_bits : {`D
 
 wire [`DBUS_OP_WIDTH - 1 : 0] 		dm_access_op = valid_dtm_req[`DBUS_OP_WIDTH - 1 : 0];
 wire [`DBUS_ADDR_WIDTH - 1 : 0] 	dm_access_addr = valid_dtm_req[(`DBUS_OP_WIDTH + `DBUS_DATA_WIDTH - 1) : `DBUS_OP_WIDTH];
-wire [`DBUS_DATA_WIDTH - 1 : 0] 	dm_access_data = valid_dtm_req [`DBUS_M_WIDTH -1 : (`DBUS_OP_WIDTH + `DBUS_DATA_WIDTH)];
+wire [`DBUS_DATA_WIDTH - 1 : 0] 	dm_access_data = valid_dtm_req [`DBUS_M_WIDTH -1 : (`DBUS_OP_WIDTH + `DBUS_ADDR_WIDTH)];
 
 wire dm_reg_wr = dm_access_op[1] && !dm_access_op[0];
 wire dm_reg_rd = !dm_access_op[1] && dm_access_op[0];

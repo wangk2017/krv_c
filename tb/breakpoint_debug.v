@@ -13,6 +13,7 @@ begin
 	$display ("The dtm driver start                         \n");
 	$display ("=============================================\n");
 	$display ("Configure the breakpoint          \n");
+	$display ("                                             \n");
 	$display ("step1:  configure tselect for trigger0       \n");
 
 	force DUT.u_dm.dtm_req_valid = 1'b1;
@@ -25,9 +26,22 @@ begin
 @(posedge DUT.cpu_clk);
 	force DUT.u_dm.dtm_req_valid = 1'b0;
 
-
+	$display ("                                             \n");
+	$display ("step2:  configure tdata1 for trigger0       \n");
 @(posedge DUT.cpu_clk);
-	$display ("step2:  configure tdata2 for trigger0       \n");
+	force DUT.u_dm.dtm_req_valid = 1'b1;
+	force DUT.u_dm.dtm_req_bits = {4'h2,1'b1,6'h0,1'b0,1'b0,1'b0,2'h0,4'h1,1'b0,4'h0,1'b1,3'h0,1'b1,2'h0,6'h04,2'b10};
+@(posedge DUT.cpu_clk);
+	force DUT.u_dm.dtm_req_valid = 1'b0;
+@(posedge DUT.cpu_clk);
+	force DUT.u_dm.dtm_req_valid = 1'b1;
+	force DUT.u_dm.dtm_req_bits = {8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07a1,6'h17,2'b10};
+@(posedge DUT.cpu_clk);
+	force DUT.u_dm.dtm_req_valid = 1'b0;
+
+	$display ("                                             \n");
+	$display ("step3:  configure tdata2 for trigger0       \n");
+@(posedge DUT.cpu_clk);
 	force DUT.u_dm.dtm_req_valid = 1'b1;
 	force DUT.u_dm.dtm_req_bits = {32'h0120,6'h04,2'b10};
 @(posedge DUT.cpu_clk);
@@ -43,8 +57,7 @@ end
 
 
 wire test_end1;
-assign test_end1 = DUT.u_core.u_dec.ebreak;
-//assign test_end1 = DUT.u_core.u_hw_trigger.breakpoint;
+assign test_end1 = DUT.u_core.u_dbg_mode_ctrl.breakpoint;
 
 reg [31:0] break_pc;
 reg [31:0] golden_value;
@@ -61,7 +74,7 @@ begin
 	break_pc = dec_pc;
 	$display ("=============================================\n");
 	$display ("TEST_END\n");
-	$display ("the breakpoint is at %h\n",dec_pc);
+	$display ("the breakpoint is at %h\n",break_pc);
 
 @(posedge DUT.cpu_clk);
 @(posedge DUT.cpu_clk);
@@ -73,7 +86,7 @@ begin
 	if(dec_pc == break_pc)
 	begin
 	$display ("=============================================\n");
-	$display ("Core is halted after ebreak met               \n");
+	$display ("Core is halted after breakpoint met               \n");
 	$display ("=============================================\n");
 	end
 	else

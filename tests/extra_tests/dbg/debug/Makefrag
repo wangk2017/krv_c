@@ -3,7 +3,8 @@
 #-----------------------------------------------------------------------
 
 debug_sc_tests = \
-	simple \
+	ebreak \
+	breakpoint \
 
 debug_m_tests = $(addprefix debug-m-, $(debug_sc_tests))
 

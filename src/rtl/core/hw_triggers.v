@@ -45,7 +45,7 @@ input store_ex,
 input [`ADDR_WIDTH - 1 : 0] mem_addr_ex,
 
 input dbg_mode,
-output reg breakpoint		//enter debug mode
+output breakpoint		//enter debug mode
 /*
 ,
 output reg breakpoint_exp	//just a breakpoint exception
@@ -77,13 +77,13 @@ wire load = mctrl_type ? tdata1[0] : 1'h0;
 assign mctrl_rd_data = {data1_type,dmode,maskmax,1'b0,select,timing,sizelo,action,chain,match,m_prv,3'b0,execute,store,load};
 
 
-wire trigger_type = {execute,store,load};
+wire[2:0] trigger_type = {execute,store,load};
 //trigger0
 reg trigger0;
 
 always @ *
 begin
-	if(!tselect && m_prv)	//select trigger0 at M priviledge
+	if(!tselect && m_prv && !dbg_mode)	//select trigger0 at M priviledge
 	begin
 		case (trigger_type)
 		3'b001: begin			//load
@@ -99,13 +99,17 @@ begin
 			trigger0 = 1'b0;
 		end
 		3'b100: begin			//pc
-			if(pc_ex == tdata2_t0)
+			if((pc_ex == tdata2_t0) && (|pc_ex))
 			trigger0 = 1'b1;
 			else
 			trigger0 = 1'b0;
 		end
 		default: trigger0 = 1'b0;
 		endcase
+	end
+	else
+	begin
+		trigger0 = 1'b0;
 	end
 end
 
@@ -115,7 +119,7 @@ reg trigger1;
 
 always @ *
 begin
-	if(!tselect && m_prv)	//select trigger1 at M priviledge
+	if(tselect && m_prv && !dbg_mode)	//select trigger1 at M priviledge
 	begin
 		case (trigger_type)
 		3'b001: begin			//load
@@ -139,43 +143,25 @@ begin
 		default: trigger1 = 1'b0;
 		endcase
 	end
+	else
+	begin
+		trigger1 = 1'b0;
+	end
 end
 
 //action with the trigger
 wire trigger = trigger0 || (trigger1 && ((chain && trigger0) || !chain));
-//breakpoint
 
-always @ (posedge cpu_clk or negedge cpu_rstn)
-begin
-	if(!cpu_rstn)
-	begin
-		breakpoint <= 1'b0;
-	end
-	else
-	begin
-		if(dmode && trigger && action && !dbg_mode)
-		breakpoint <= 1'b1;
-		else
-		breakpoint <= 1'b0;
-	end
-end
+//breakpoint
+wire action_breakpoint = action == 4'h1;
+
+assign breakpoint = dmode && trigger && action_breakpoint && !dbg_mode;
+
 /*
 //breakpoint_exception
+wire action_breakpoint_exp = action == 4'h0;
 
-always @ (posedge cpu_clk or negedge cpu_rstn)
-begin
-	if(!cpu_rstn)
-	begin
-		breakpoint_exp <= 1'b0;
-	end
-	else
-	begin
-		if(trigger && !action && !dbg_mode)
-		breakpoint_exp <= 1'b1;
-		else
-		breakpoint_exp <= 1'b0;
-	end
-end
+assign breakpoint = dmode && trigger && action_breakpoint_exp && !dbg_mode;
 */
 
 

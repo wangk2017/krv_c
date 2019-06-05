@@ -1,5 +1,6 @@
 //`define RISCV
 `define BREAKPOINT
+//`define EBREAK
 //`define DBG_REF
 //`define ZEPHYR
 //`define ZEPHYR_SYNC

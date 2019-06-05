@@ -36,7 +36,7 @@ hack_hex: dhrystone.hex
 
 all_pg_hex: pg/simple.hex
 
-all_dbg_hex: dbg/simple.hex
+all_dbg_hex: dbg/ebreak.hex dbg/breakpoint.hex
 
 
 int/%.hex: tests/extra_tests/int/kplic-m-% firmware/makehex.py

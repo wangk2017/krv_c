@@ -32,6 +32,7 @@ output reg [`DM_REG_WIDTH - 1 : 0]	data0,
 output reg [`DM_REG_WIDTH - 1 : 0]	command,
 output reg 				cmd_update,
 input 					cmd_finished,
+input 					cmd_read_data_valid,
 input [`DATA_WIDTH - 1 : 0]		cmd_read_data,
 
 //DTM interface
@@ -39,9 +40,9 @@ input				dtm_req_valid,
 output				dtm_req_ready,
 input[`DBUS_M_WIDTH - 1 : 0]	dtm_req_bits,
 
-output				dm_resp_valid,
+output reg			dm_resp_valid,
 input				dm_resp_ready,
-output[`DBUS_S_WIDTH - 1 : 0]	dm_resp_bits
+output reg[`DBUS_S_WIDTH - 1 : 0]	dm_resp_bits
 
 );
 
@@ -87,9 +88,9 @@ begin
 		begin
 			data0 <= dm_access_data;
 		end
-		else
+		else if(cmd_read_data_valid)
 		begin
-			data0 <= data0;
+			data0 <= cmd_read_data;
 		end
 	end
 end
@@ -125,7 +126,7 @@ wire [`DM_REG_WIDTH - 1 : 0] command_read_data;
 assign command_read_data = command_sel ? command : {`DM_REG_WIDTH{1'b0}};
 
 //dm regs read
-wire dm_regs_read_data = {`DATA_WIDTH{dm_reg_rd}} &
+wire [`DM_REG_WIDTH - 1 : 0] dm_regs_read_data = {`DATA_WIDTH{dm_reg_rd}} &
 				(data0_read_data |
 				 command_read_data
 				);
@@ -148,9 +149,30 @@ begin
 end
 
 assign dtm_req_ready = !cmd_outstanding;
-
-assign dm_resp_valid = cmd_finished || dm_reg_rd;
-assign dm_resp_bits = {dm_access_op,dm_regs_read_data | cmd_read_data};
-
+/*
+assign dm_resp_valid = dm_reg_rd;
+assign dm_resp_bits = {dm_access_op,dm_regs_read_data};
+*/
+always @ (posedge sys_clk or negedge sys_rstn)
+begin
+	if (!sys_rstn)
+	begin
+		dm_resp_valid <= 1'b0;
+		dm_resp_bits <= 0;
+	end
+	else
+	begin
+		if(dm_resp_ready)
+		begin
+			dm_resp_valid <= dm_reg_rd;
+			dm_resp_bits <= {dm_access_op,dm_regs_read_data};
+		end
+		else if(dm_reg_rd)
+		begin
+			dm_resp_valid <= 1'b1;
+			dm_resp_bits <= {dm_access_op,dm_regs_read_data};
+		end
+	end
+end
 
 endmodule

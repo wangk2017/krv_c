@@ -62,11 +62,13 @@ assign test_end1 = DUT.u_core.u_dbg_mode_ctrl.breakpoint;
 reg [31:0] break_pc;
 reg [31:0] golden_value;
 
-integer i;
+reg[7:0] i;
+reg[7:0] j;
 integer fp_z;
 
 initial
 begin
+force DUT.u_dm.dm_resp_ready = 1'b1;
 
 	fp_z =$fopen ("./out/ref_values.txt","r");
 
@@ -92,7 +94,7 @@ begin
 	else
 	begin
 	$display ("=============================================\n");
-	$display ("Core Failed to halted after ebreak met       \n");
+	$display ("Core Failed to halted after breakpoint       \n");
 	$display ("=============================================\n");
 	end
 	//check whether the GPRS has the same value as simulation breakpoint
@@ -103,6 +105,47 @@ begin
 		$display ("GPRS%d compare PASS! ", i);
 		else
 		$display ("GPRS%d compare FAIL!\n GPRS%d = %h, golden_value = %h",i,i,DUT.u_core.u_dec.u_gprs.gprs_X[i],golden_value);
+	end
+	$fclose(fp_z);
+
+@(posedge DUT.cpu_clk);
+@(posedge DUT.cpu_clk);
+@(posedge DUT.cpu_clk);
+	$display ("=============================================\n");
+	$display ("check DM access GPRS after breakpoint       \n");
+	$display ("=============================================\n");
+
+	fp_z =$fopen ("./out/ref_values.txt","r");
+	for (j=0; j<32; j=j+1)
+	begin
+	$display ("=========================================\n");
+@(posedge DUT.cpu_clk);
+	$display ("debugger send abs command to read GPRS %d\n",j);
+	force DUT.u_dm.dtm_req_valid = 1'b1;
+	force DUT.u_dm.dtm_req_bits = {8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b0,8'h10,j,6'h17,2'b10};
+@(posedge DUT.cpu_clk);
+	force DUT.u_dm.dtm_req_valid = 1'b0;
+
+@(posedge DUT.cpu_clk);
+	$display ("debugger read the return value from data0\n");
+	force DUT.u_dm.dtm_req_valid = 1'b1;
+	force DUT.u_dm.dtm_req_bits = {32'h0,6'h04,2'b01};
+@(posedge DUT.cpu_clk);
+	force DUT.u_dm.dtm_req_valid = 1'b0;
+@(posedge DUT.u_dm.u_dm_regs.dm_resp_valid);
+begin
+		$fscanf(fp_z, "%h", golden_value);
+		if(DUT.u_dm.u_dm_regs.dm_resp_bits[31:0] == golden_value)
+		begin
+		$display ("GPRS%d compare PASS! \n", j);
+		$display ("=========================================\n");
+		end
+		else
+		begin
+		$display ("GPRS%d compare FAIL!\nGPRS%d = %h, golden_value = %h \n",j,j,DUT.u_dm.u_dm_regs.dm_resp_bits[31:0],golden_value);
+		$display ("=========================================\n");
+		end
+end
 	end
 
 	$fclose(fp_z);

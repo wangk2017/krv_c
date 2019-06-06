@@ -154,6 +154,5 @@ clean:
 	rm -vrf ./out/*.sim
 	rm -vrf ./out/krv*
 	rm -vrf ./out/uart*
-	rm -vrf ./out/*.txt
 
 .PHONY: all

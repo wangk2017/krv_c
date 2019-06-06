@@ -63,6 +63,7 @@ dm_regs u_dm_regs (
 .command		(command	),
 .cmd_update		(cmd_update	),
 .cmd_finished		(cmd_finished		),
+.cmd_read_data_valid	(dbg_read_data_valid	),
 .cmd_read_data		(cmd_read_data		),
 .dtm_req_valid		(dtm_req_valid	),
 .dtm_req_ready		(dtm_req_ready	),

@@ -1,3 +1,5 @@
+`include "dbg_tasks.v"
+`include "dbg_defines.vh"
 //configure breakpoint by debugger (with a dtm driver)
 initial
 begin
@@ -15,42 +17,20 @@ begin
 	$display ("Configure the breakpoint          \n");
 	$display ("                                             \n");
 	$display ("step1:  configure tselect for trigger0       \n");
+	$display ("---------------------------------------------\n");
 
-	force DUT.u_dm.dtm_req_valid = 1'b1;
-	force DUT.u_dm.dtm_req_bits = {32'h0000,6'h04,2'b10};
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b0;
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b1;
-	force DUT.u_dm.dtm_req_bits = {8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07a0,6'h17,2'b10};
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b0;
+	dtm_write_reg(32'h0,`DATA0_ADDR);
+	dtm_write_reg({8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07a0},`COMMAND_ADDR);
 
-	$display ("                                             \n");
+	$display ("                                            \n");
 	$display ("step2:  configure tdata1 for trigger0       \n");
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b1;
-	force DUT.u_dm.dtm_req_bits = {4'h2,1'b1,6'h0,1'b0,1'b0,1'b0,2'h0,4'h1,1'b0,4'h0,1'b1,3'h0,1'b1,2'h0,6'h04,2'b10};
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b0;
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b1;
-	force DUT.u_dm.dtm_req_bits = {8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07a1,6'h17,2'b10};
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b0;
+	dtm_write_reg({4'h2,1'b1,6'h0,1'b0,1'b0,1'b0,2'h0,4'h1,1'b0,4'h0,1'b1,3'h0,1'b1,2'h0},`DATA0_ADDR);
+	dtm_write_reg({8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07a1},`COMMAND_ADDR);
 
 	$display ("                                             \n");
 	$display ("step3:  configure tdata2 for trigger0       \n");
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b1;
-	force DUT.u_dm.dtm_req_bits = {32'h0120,6'h04,2'b10};
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b0;
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b1;
-	force DUT.u_dm.dtm_req_bits = {8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07a2,6'h17,2'b10};
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b0;
+	dtm_write_reg(32'h0120,`DATA0_ADDR);
+	dtm_write_reg({8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07a2},`COMMAND_ADDR);
 
 end
 
@@ -98,6 +78,9 @@ begin
 	$display ("=============================================\n");
 	end
 	//check whether the GPRS has the same value as simulation breakpoint
+	$display ("=============================================\n");
+	$display ("check the GPRS value                        \n");
+	$display ("=============================================\n");
 	for (i=0; i<32; i=i+1)
 	begin
 		$fscanf(fp_z, "%h", golden_value);
@@ -118,34 +101,27 @@ begin
 	fp_z =$fopen ("./out/ref_values.txt","r");
 	for (j=0; j<32; j=j+1)
 	begin
-	$display ("=========================================\n");
-@(posedge DUT.cpu_clk);
-	$display ("debugger send abs command to read GPRS %d\n",j);
-	force DUT.u_dm.dtm_req_valid = 1'b1;
-	force DUT.u_dm.dtm_req_bits = {8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b0,8'h10,j,6'h17,2'b10};
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b0;
+		$display ("-----------------------------------------\n");
+		$display ("debugger send abs command to read GPRS %d\n",j);
+		dtm_write_reg({8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b0,8'h10,j},`COMMAND_ADDR);
 
-@(posedge DUT.cpu_clk);
-	$display ("debugger read the return value from data0\n");
-	force DUT.u_dm.dtm_req_valid = 1'b1;
-	force DUT.u_dm.dtm_req_bits = {32'h0,6'h04,2'b01};
-@(posedge DUT.cpu_clk);
-	force DUT.u_dm.dtm_req_valid = 1'b0;
-@(posedge DUT.u_dm.u_dm_regs.dm_resp_valid);
-begin
-		$fscanf(fp_z, "%h", golden_value);
-		if(DUT.u_dm.u_dm_regs.dm_resp_bits[31:0] == golden_value)
+		$display ("debugger read the return value from data0\n");
+		dtm_read_reg(`DATA0_ADDR);
+
+		@(posedge DUT.u_dm.u_dm_regs.dm_resp_valid);
 		begin
-		$display ("GPRS%d compare PASS! \n", j);
-		$display ("=========================================\n");
+			$fscanf(fp_z, "%h", golden_value);
+			if(DUT.u_dm.u_dm_regs.dm_resp_bits[31:0] == golden_value)
+			begin
+			$display ("GPRS%d compare PASS! \n", j);
+			$display ("-----------------------------------------\n");
+			end
+			else
+			begin
+			$display ("GPRS%d compare FAIL!\nGPRS%d = %h, golden_value = %h \n",j,j,DUT.u_dm.u_dm_regs.dm_resp_bits[31:0],golden_value);
+			$display ("-----------------------------------------\n");
+			end
 		end
-		else
-		begin
-		$display ("GPRS%d compare FAIL!\nGPRS%d = %h, golden_value = %h \n",j,j,DUT.u_dm.u_dm_regs.dm_resp_bits[31:0],golden_value);
-		$display ("=========================================\n");
-		end
-end
 	end
 
 	$fclose(fp_z);

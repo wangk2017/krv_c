@@ -28,6 +28,7 @@ input				sys_clk,
 input				sys_rstn,
 
 //DM internal sub-module interface
+output					resumereq_w1,
 output reg [`DM_REG_WIDTH - 1 : 0]	data0,
 output reg [`DM_REG_WIDTH - 1 : 0]	command,
 output reg 				cmd_update,
@@ -74,6 +75,24 @@ wire sbdata0_sel 	= (dm_access_addr == `SBDATA0_ADDR	);
 //22: impebreak
 //19: allhavereset
 //18  anyhavereset
+//dmcontrol
+reg haltreq;
+always @ (posedge sys_clk or negedge sys_rstn)
+begin
+	if (!sys_rstn)
+	begin
+		haltreq <= 1'b0;
+	end
+	else
+	begin
+		if (dmcontrol_sel && dm_reg_wr)
+		begin
+			haltreq <= dm_access_data[31];
+		end
+	end
+end
+
+assign resumereq_w1 = (!haltreq) && (dmcontrol_sel && dm_reg_wr && dm_access_data[30]);
 
 //data0
 always @ (posedge sys_clk or negedge sys_rstn)

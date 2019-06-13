@@ -88,6 +88,7 @@ output wire [`ADDR_WIDTH - 1 : 0] mem_addr_mem		// memory address at MEM stage
 ,
 input wire breakpoint,
 input wire dbg_mode,
+input wire single_step_d2,
 output wire [`ADDR_WIDTH - 1 : 0] mem_addr_ex		// memory address at MEM stage
 `endif
 
@@ -433,7 +434,7 @@ assign branch_taken_ex = branch_beq_taken | branch_bne_taken | branch_blt_taken 
 
 wire ex_stall = (div_start && !div_done) 
 `ifdef KRV_HAS_DBG
-||dbg_mode
+|| (dbg_mode && !single_step_d2)
 `endif
 ;
 assign ex_ready = !ex_stall && mem_ready;

@@ -90,6 +90,7 @@ module core (
 `ifdef KRV_HAS_DBG
 //debug interface
 ,
+input				resumereq_w1,
 input				dbg_reg_access,
 input 				dbg_wr1_rd0,
 input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
@@ -223,7 +224,11 @@ wire 					mcause_sel;
 wire 					mtval_sel;
 
 `ifdef KRV_HAS_DBG
-wire breakpoint;
+wire                        		step;	
+wire                        		single_step;	
+wire                        		single_step_d1;	
+wire                        		single_step_d2;	
+wire 					breakpoint;
 wire 					dret;
 wire					dbg_wr;
 wire 					dbg_mode;
@@ -328,6 +333,7 @@ fetch u_fetch(
 .ebreak			(ebreak),
 .breakpoint		(breakpoint),
 .dpc			(dpc),
+.single_step		(single_step),
 .dret			(dret),
 .dbg_mode		(dbg_mode	),
 `endif
@@ -420,6 +426,7 @@ dec u_dec (
 .wfi			(wfi)
 `ifdef KRV_HAS_DBG
 ,
+.single_step_d1		(single_step_d1),
 .breakpoint		(breakpoint),
 .d_regs_read_data	(d_regs_read_data),
 .dret			(dret),
@@ -494,6 +501,7 @@ alu u_alu (
 .mem_addr_mem		(mem_addr_mem)
 `ifdef KRV_HAS_DBG
 ,
+.single_step_d2		(single_step_d2),
 .breakpoint		(breakpoint),
 .dbg_mode		(dbg_mode	),
 .mem_addr_ex		(mem_addr_ex	)
@@ -619,6 +627,7 @@ mcsr u_mcsr(
 .breakpoint		(breakpoint),
 .ebreak			(ebreak),
 .dpc			(dpc),
+.step			(step),
 .dbg_mode		(dbg_mode	),
 .dbg_reg_access		(dbg_reg_access	),
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
@@ -751,6 +760,11 @@ hw_triggers u_hw_triggers(
 dbg_mode_ctrl u_dbg_mode_ctrl (
 .cpu_clk		(cpu_clk),		
 .cpu_rstn		(cpu_rstn),	
+.resumereq_w1		(resumereq_w1),
+.step			(step),
+.single_step		(single_step),
+.single_step_d1		(single_step_d1),
+.single_step_d2		(single_step_d2),
 .breakpoint		(breakpoint),
 .ebreak			(ebreak),
 .dret			(dret),

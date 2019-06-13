@@ -61,6 +61,7 @@ input wire ebreak,
 input wire breakpoint,
 input wire dbg_mode,					// dbg_mode
 input wire dret,					// dret
+input wire single_step,					// single_step
 input wire [`ADDR_WIDTH - 1 : 0] dpc,			// dpc for return from debug
 `endif
 output wire pc_misaligned,				// pc misaligned condition found at IF stage
@@ -271,7 +272,7 @@ wire keep_pc = fence_dec || (fence_dec_r && !instr_read_data_valid) || !dec_read
 always @*
 begin
 `ifdef KRV_HAS_DBG
-	if(dret)
+	if(dret || single_step)
 	begin
 		next_pc = dpc;
 	end

@@ -37,7 +37,7 @@ input				dm_resp_ready,
 output[`DBUS_S_WIDTH - 1 : 0]	dm_resp_bits,
 
 //core interface
-
+output				resumereq_w1,
 output				dbg_reg_access,
 output 				dbg_wr1_rd0,
 output[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
@@ -59,7 +59,8 @@ wire [`DATA_WIDTH - 1 : 0]	cmd_read_data;
 dm_regs u_dm_regs (
 .sys_clk		(sys_clk	),
 .sys_rstn		(sys_rstn	),
-.data0			(data0	),
+.resumereq_w1		(resumereq_w1	),
+.data0			(data0		),
 .command		(command	),
 .cmd_update		(cmd_update	),
 .cmd_finished		(cmd_finished		),

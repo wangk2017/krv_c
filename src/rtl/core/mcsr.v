@@ -75,6 +75,7 @@ input wire [`ADDR_WIDTH - 1 : 0] pc_dec,		// Program counter value at DEC stage
 
 input					breakpoint,
 input					ebreak,
+output reg 				step,
 output reg [`ADDR_WIDTH - 1 : 0]	dpc,
 input					dbg_mode,
 input					dbg_reg_access,
@@ -542,7 +543,6 @@ wire stoptime = 1'b0;
 reg [2:0] cause;
 wire mprven = 1'b0;
 wire nmip = 1'b0;
-reg step;
 reg [1:0] prv;
 
 always @ (posedge cpu_clk or negedge cpu_rstn)

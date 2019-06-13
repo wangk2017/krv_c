@@ -125,6 +125,7 @@ output reg wfi							// WFI
 input				breakpoint,
 input [`DATA_WIDTH - 1 : 0] 	d_regs_read_data,
 input  				dbg_mode,
+input				single_step_d1,
 output 				dret,
 input				dbg_reg_access,
 input 				dbg_wr1_rd0,
@@ -1027,7 +1028,7 @@ assign fence_stall = fence_d1;
 //stall condition met in DEC stage
 assign dec_stall = wfi_stall || load_hazard_stall || fence_stall
 `ifdef KRV_HAS_DBG
-|| dbg_mode
+|| (dbg_mode && !single_step_d1)
 `endif
 ;
 assign dec_ready = !dec_stall && (ex_ready);

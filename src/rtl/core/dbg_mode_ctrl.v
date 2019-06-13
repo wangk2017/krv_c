@@ -31,13 +31,33 @@ module dbg_mode_ctrl (
 input cpu_clk,
 input cpu_rstn,
 
+input step,
+input resumereq_w1,
 input breakpoint,
 input ebreak,
 input dret,
-
+output single_step,
+output reg single_step_d1,
+output reg single_step_d2,
 output reg dbg_mode
 );
 
+
+assign single_step = step && resumereq_w1;
+
+always @ (posedge cpu_clk or negedge cpu_rstn)
+begin
+	if(!cpu_rstn)
+	begin
+		single_step_d1 <= 1'b0;
+		single_step_d2 <= 1'b0;
+	end
+	else
+	begin
+		single_step_d1 <= single_step;
+		single_step_d2 <= single_step_d1;
+	end
+end
 
 always @ (posedge cpu_clk or negedge cpu_rstn)
 begin
@@ -45,9 +65,9 @@ begin
 	dbg_mode <= 1'b0;
 	else 
 	begin
-		if (dret)
+		if (dret || resumereq_w1)
 		dbg_mode <= 1'b0;
-		else if(ebreak || breakpoint)
+		else if(ebreak || breakpoint || single_step_d1)
 		dbg_mode <= 1'b1;
 	end
 end

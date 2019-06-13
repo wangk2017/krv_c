@@ -190,6 +190,7 @@ wire dma_dtcm_rdata_valid;
 	wire  [`INT_NUM - 1 : 0] external_int = {31'h0, timer_int};
 
 `ifdef KRV_HAS_DBG
+wire 				resumereq_w1;
 wire				dbg_reg_access;
 wire 				dbg_wr1_rd0;
 wire[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno;
@@ -318,6 +319,7 @@ core u_core (
 `ifdef KRV_HAS_DBG
 //debug interface
 ,
+.resumereq_w1		(resumereq_w1	),
 .dbg_reg_access		(dbg_reg_access	),
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
 .dbg_regno		(dbg_regno	),
@@ -712,6 +714,7 @@ dm u_dm(
 .dm_resp_valid		(dm_resp_valid	),
 .dm_resp_ready		(dm_resp_ready	),
 .dm_resp_bits		(dm_resp_bits	),
+.resumereq_w1		(resumereq_w1	),
 .dbg_reg_access		(dbg_reg_access	),
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
 .dbg_regno		(dbg_regno	),

@@ -62,6 +62,7 @@ input wire breakpoint,
 input wire dbg_mode,					// dbg_mode
 input wire dret,					// dret
 input wire single_step,					// single_step
+input wire single_step_d2,				// single_step delay 1 cycle
 input wire [`ADDR_WIDTH - 1 : 0] dpc,			// dpc for return from debug
 `endif
 output wire pc_misaligned,				// pc misaligned condition found at IF stage
@@ -185,7 +186,7 @@ wire  [`ADDR_WIDTH - 1 : 0] addr_adder_res_c = addr_adder_res;
 //propagate from IF to DEC stage
 //--------------------------------------------------------------------------------------//
 `ifdef KRV_HAS_DBG
-wire if_stall = dbg_mode;
+wire if_stall = dbg_mode && !single_step_d2;
 `else
 wire if_stall = 1'b0;
 `endif

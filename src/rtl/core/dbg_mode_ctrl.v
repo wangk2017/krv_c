@@ -39,6 +39,8 @@ input dret,
 output single_step,
 output reg single_step_d1,
 output reg single_step_d2,
+output reg single_step_d3,
+output reg single_step_d4,
 output reg dbg_mode
 );
 
@@ -51,11 +53,15 @@ begin
 	begin
 		single_step_d1 <= 1'b0;
 		single_step_d2 <= 1'b0;
+		single_step_d3 <= 1'b0;
+		single_step_d4 <= 1'b0;
 	end
 	else
 	begin
 		single_step_d1 <= single_step;
 		single_step_d2 <= single_step_d1;
+		single_step_d3 <= single_step_d2;
+		single_step_d4 <= single_step_d3;
 	end
 end
 
@@ -65,9 +71,9 @@ begin
 	dbg_mode <= 1'b0;
 	else 
 	begin
-		if (dret || resumereq_w1)
+		if (dret || (resumereq_w1 && !step))
 		dbg_mode <= 1'b0;
-		else if(ebreak || breakpoint || single_step_d1)
+		else if(ebreak || breakpoint)
 		dbg_mode <= 1'b1;
 	end
 end

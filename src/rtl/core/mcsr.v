@@ -98,7 +98,7 @@ wire dbg_csrs_range = (dbg_regno >= 16'h0000) && (dbg_regno <= 16'h0fff);
 wire dbg_csrs_access = dbg_reg_access && dbg_csrs_range;
 assign dbg_wr = dbg_wr1_rd0  && dbg_csrs_access;
 wire dbg_rd = !dbg_wr1_rd0 && dbg_csrs_access;
-wire dbg_addr = dbg_regno[11:0];
+wire [11:0] dbg_addr = dbg_regno[11:0];
 assign dbg_read_data_valid = dbg_rd;
 assign dbg_read_data = dbg_rd ? read_data : 32'h0;
 `else
@@ -106,7 +106,7 @@ wire dbg_csrs_access = 1'b0;
 wire dbg_wr = 1'b0;
 wire dbg_rd = 1'b0;
 wire [`DATA_WIDTH - 1 : 0]	dbg_write_data = 32'h0;
-wire dbg_addr = 12'h0;
+wire [11:0] dbg_addr = 12'h0;
 `endif
 
 

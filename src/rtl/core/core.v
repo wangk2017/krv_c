@@ -228,6 +228,8 @@ wire                        		step;
 wire                        		single_step;	
 wire                        		single_step_d1;	
 wire                        		single_step_d2;	
+wire                        		single_step_d3;	
+wire                        		single_step_d4;	
 wire 					breakpoint;
 wire 					dret;
 wire					dbg_wr;
@@ -334,6 +336,7 @@ fetch u_fetch(
 .breakpoint		(breakpoint),
 .dpc			(dpc),
 .single_step		(single_step),
+.single_step_d2		(single_step_d2),
 .dret			(dret),
 .dbg_mode		(dbg_mode	),
 `endif
@@ -427,6 +430,8 @@ dec u_dec (
 `ifdef KRV_HAS_DBG
 ,
 .single_step_d1		(single_step_d1),
+.single_step_d2		(single_step_d2),
+.single_step_d3		(single_step_d3),
 .breakpoint		(breakpoint),
 .d_regs_read_data	(d_regs_read_data),
 .dret			(dret),
@@ -502,6 +507,8 @@ alu u_alu (
 `ifdef KRV_HAS_DBG
 ,
 .single_step_d2		(single_step_d2),
+.single_step_d3		(single_step_d3),
+.single_step_d4		(single_step_d4),
 .breakpoint		(breakpoint),
 .dbg_mode		(dbg_mode	),
 .mem_addr_ex		(mem_addr_ex	)
@@ -765,6 +772,8 @@ dbg_mode_ctrl u_dbg_mode_ctrl (
 .single_step		(single_step),
 .single_step_d1		(single_step_d1),
 .single_step_d2		(single_step_d2),
+.single_step_d3		(single_step_d3),
+.single_step_d4		(single_step_d4),
 .breakpoint		(breakpoint),
 .ebreak			(ebreak),
 .dret			(dret),

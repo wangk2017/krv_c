@@ -10,6 +10,8 @@ integer fp_z;
 
 initial
 begin
+	force DUT.u_dm.dtm_req_valid = 1'b0;
+
 	$display ("=============================================\n");
 	$display ("running test to debug ebreak/breakpoint\n");
 	$display ("=============================================\n");

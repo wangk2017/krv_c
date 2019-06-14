@@ -4,9 +4,8 @@
 initial
 begin
 	force DUT.u_dm.dtm_req_valid = 1'b0;
-
 	$display ("=============================================\n");
-	$display ("running test to debug breakpoint\n");
+	$display ("running test to debug single step\n");
 	$display ("=============================================\n");
 @(posedge DUT.cpu_clk);
 @(posedge DUT.cpu_clk);
@@ -31,7 +30,7 @@ begin
 
 	$display ("                                             \n");
 	$display ("step3:  configure tdata2 for trigger0       \n");
-	dtm_write_reg(32'h0120,`DATA0_ADDR);
+	dtm_write_reg(32'h011c,`DATA0_ADDR);
 	dtm_write_reg({8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07a2},`COMMAND_ADDR);
 
 end
@@ -79,6 +78,20 @@ begin
 	$display ("Core Failed to halted after breakpoint       \n");
 	$display ("=============================================\n");
 	end
+
+	//run a single step
+	$display ("                                             \n");
+	$display ("set step in dcsr for single step      \n");
+	dtm_write_reg({4'h4,12'h0,1'b1,3'b0,1'b0,1'b1,1'b1,3'h0,1'b0,1'b0,1'b1,2'h0},`DATA0_ADDR);
+	dtm_write_reg({8'h0,1'b0,3'h0,1'b0,1'b0,1'b1,1'b1,16'h07b0},`COMMAND_ADDR);
+	$display ("                                             \n");
+	$display ("write 1 to resumereq for single step      \n");
+	dtm_write_reg({1'b0,1'b1,30'h0},`DMCONTROL_ADDR);
+
+repeat(8)
+begin
+@(posedge DUT.cpu_clk);
+end
 	//check whether the GPRS has the same value as simulation breakpoint
 	$display ("=============================================\n");
 	$display ("check the GPRS value                        \n");

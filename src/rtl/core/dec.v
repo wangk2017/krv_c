@@ -126,6 +126,8 @@ input				breakpoint,
 input [`DATA_WIDTH - 1 : 0] 	d_regs_read_data,
 input  				dbg_mode,
 input				single_step_d1,
+input				single_step_d2,
+input				single_step_d3,
 output 				dret,
 input				dbg_reg_access,
 input 				dbg_wr1_rd0,
@@ -1028,7 +1030,7 @@ assign fence_stall = fence_d1;
 //stall condition met in DEC stage
 assign dec_stall = wfi_stall || load_hazard_stall || fence_stall
 `ifdef KRV_HAS_DBG
-|| (dbg_mode && !single_step_d1)
+|| (dbg_mode && !(single_step_d1 || single_step_d2 || single_step_d3))
 `endif
 ;
 assign dec_ready = !dec_stall && (ex_ready);

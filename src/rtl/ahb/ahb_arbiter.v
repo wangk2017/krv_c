@@ -53,6 +53,7 @@ input wire HBUSREQ_M2,
 input wire HLOCK_M2,
 input wire [`AHB_ADDR_WIDTH - 1 : 0] HADDR_M2,
 input wire [1:0] HTRANS_M2,
+input wire [2 : 0] HSIZE_M2,
 input wire HWRITE_M2,
 input wire [`AHB_DATA_WIDTH - 1 : 0] HWDATA_M2,
 output reg HGRANT_M2,
@@ -210,7 +211,7 @@ begin
 		end
 		3'b100: begin
 				HADDR_S = HADDR_M2;
-				HSIZE_S = 3'b010;
+				HSIZE_S = HSIZE_M2;
 				HTRANS_S = HTRANS_M2;
 				HWRITE_S = HWRITE_M2;
 				HLOCK_S = HLOCK_M2;

@@ -230,7 +230,6 @@ wire [1:0] htrans_i;
 wire [`AHB_ADDR_WIDTH - 1 : 0] haddr_i;
 wire [2 : 0] hsize_i;
 reg [`AHB_DATA_WIDTH - 1 : 0] hwdata_i;
-reg hbusreq_r;
 
 wire fifo_empty;
 assign fifo_empty = DAHB_trans_buffer_empty;

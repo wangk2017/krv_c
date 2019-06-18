@@ -197,6 +197,20 @@ wire[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno;
 wire [`DATA_WIDTH - 1 : 0]	dbg_write_data;
 wire                     	dbg_read_data_valid;
 wire[`DATA_WIDTH - 1 : 0]	dbg_read_data;
+	wire sb_HGRANT;
+	wire sb_HREADY;
+	wire [1:0] sb_HRESP;
+	wire [`AHB_DATA_WIDTH - 1 : 0] sb_HRDATA;
+	wire sb_HBUSREQ;
+	wire sb_HLOCK;
+	wire [1:0] sb_HTRANS;
+	wire [`AHB_ADDR_WIDTH - 1 : 0] sb_HADDR;
+	wire sb_HWRITE;
+	wire [2:0] sb_HSIZE;
+	wire [2:0] sb_HBURST;
+	wire [3:0] sb_HPROT;
+	wire [`AHB_DATA_WIDTH - 1 : 0] sb_HWDATA;
+
 `endif
 	
 //-----------------------------------------------------//
@@ -492,6 +506,19 @@ ahb m_ahb(
 .HREADY_to_M1		(DAHB_HREADY),
 
 //Master2
+`ifdef KRV_HAS_DBG
+.HBUSREQ_from_M2	(sb_HBUSREQ),
+.HLOCK_from_M2		(sb_HLOCK),
+.HADDR_from_M2		(sb_HADDR),
+.HSIZE_from_M2		(sb_HSIZE),
+.HTRANS_from_M2		(sb_HTRANS),
+.HWRITE_from_M2		(sb_HWRITE),
+.HWDATA_from_M2		(sb_HWDATA),
+.HGRANT_to_M2		(sb_HGRANT),
+.HRDATA_to_M2		(sb_HRDATA),
+.HRESP_to_M2		(sb_HRESP),
+.HREADY_to_M2		(sb_HREADY),
+`else
 .HBUSREQ_from_M2	(1'b0),
 .HLOCK_from_M2		(1'b0),
 .HADDR_from_M2		(32'h0),
@@ -502,6 +529,7 @@ ahb m_ahb(
 .HRDATA_to_M2		(),
 .HRESP_to_M2		(),
 .HREADY_to_M2		(),
+`endif
 
 //Slave0
 .HSEL_to_S0		(HSEL_flash	),
@@ -706,6 +734,22 @@ dtm u_dtm (
 //dm
 //-----------------------------------------------------//
 dm u_dm(
+	.HCLK		(HCLK),
+	.HRESETn	(HRESETn),
+	.HBUSREQ	(sb_HBUSREQ),
+	.HGRANT		(sb_HGRANT),
+	.HREADY		(sb_HREADY),
+	.HRESP		(sb_HRESP),
+	.HRDATA		(sb_HRDATA),
+	.HLOCK		(sb_HLOCK),
+	.HTRANS		(sb_HTRANS),
+	.HADDR		(sb_HADDR),
+	.HWRITE		(sb_HWRITE),
+	.HSIZE		(sb_HSIZE),
+	.HBURST		(sb_HBURST),
+	.HPROT		(sb_HPROT),
+	.HWDATA		(sb_HWDATA),
+
 .sys_clk		(cpu_clk	),
 .sys_rstn		(cpu_rstn	),
 .dtm_req_valid		(dtm_req_valid	),

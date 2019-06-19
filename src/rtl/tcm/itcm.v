@@ -34,6 +34,7 @@ module itcm (
 	output reg [`DATA_WIDTH - 1 : 0] instr_itcm_read_data,	//read data
 	output reg instr_itcm_read_data_valid,			//read data valid
 
+/*/
 //read/write request from data IF
 	output wire data_itcm_ready,				//indication of itcm ready for data IF
 	input data_itcm_access,					//valid access
@@ -43,6 +44,16 @@ module itcm (
 	input wire [`DATA_WIDTH - 1 : 0] data_itcm_write_data,	//write data
 	output reg [`DATA_WIDTH - 1 : 0] data_itcm_read_data,	//read data
 	output reg data_itcm_read_data_valid,			//read data valid
+*/
+
+//read/write request from AHB IF (mainly for debug)
+input wire AHB_itcm_access,
+input wire [`AHB_ADDR_WIDTH - 1 : 0] AHB_tcm_addr,
+input wire [3:0] AHB_tcm_byte_strobe,
+input wire AHB_tcm_rd0_wr1,
+input wire [`KPLIC_DATA_WIDTH - 1 : 0] AHB_tcm_write_data,
+output reg [`KPLIC_DATA_WIDTH - 1 : 0] AHB_itcm_read_data,
+
 
 //for auto-load
 	input wire IAHB_ready,					//IAHB is ready
@@ -193,11 +204,19 @@ end
 //------------------------------------------------------------------------------//
 //ITCM read/write operation
 //------------------------------------------------------------------------------//
-assign itcm_write_en = auto_load_wr || (data_itcm_access && data_itcm_rd0_wr1);
-assign itcm_write_data = auto_load_wr? IAHB_read_data : data_itcm_write_data;
-assign itcm_write_addr = auto_load_wr? itcm_auto_write_addr : data_itcm_addr;
+//wire data_itcm_wr = (data_itcm_access && data_itcm_rd0_wr1);
+wire AHB_itcm_wr = (AHB_itcm_access && AHB_tcm_rd0_wr1);
+
+assign itcm_write_en = auto_load_wr || /*data_itcm_wr ||*/ AHB_itcm_wr;
+
+assign itcm_write_data = auto_load_wr? IAHB_read_data : (/*data_itcm_wr ?  data_itcm_write_data :*/ AHB_tcm_write_data);
+
+assign itcm_write_addr = auto_load_wr? itcm_auto_write_addr : (/*data_itcm_wr ?  data_itcm_addr : */AHB_tcm_addr);
+
 assign itcm_write_addr_from_0 = itcm_write_addr - `ITCM_START_ADDR;
-assign itcm_byte_strobe = auto_load_wr? auto_load_byte_strobe : data_itcm_byte_strobe;
+
+
+assign itcm_byte_strobe = auto_load_wr? auto_load_byte_strobe : AHB_tcm_byte_strobe;
 
 
 wire [14 : 2 ] itcm_word_addr_wr = itcm_write_addr_from_0[14 : 2 ];
@@ -205,8 +224,13 @@ wire [14 : 2 ] itcm_word_addr_wr = itcm_write_addr_from_0[14 : 2 ];
 wire [`ADDR_WIDTH - 1 : 0 ] instr_itcm_addr_rd_from_0 = instr_itcm_addr - `ITCM_START_ADDR;
 wire [14 : 2 ] instr_itcm_word_addr_rd = instr_itcm_addr_rd_from_0[14 : 2 ];
 
+/*
 wire [`ADDR_WIDTH - 1 : 0 ] data_itcm_addr_rd_from_0 = data_itcm_addr - `ITCM_START_ADDR;
 wire [14 : 2 ] data_itcm_word_addr_rd = data_itcm_addr_rd_from_0[14 : 2 ];
+*/
+
+wire [`ADDR_WIDTH - 1 : 0 ] AHB_itcm_addr_rd_from_0 = AHB_tcm_addr - `ITCM_START_ADDR;
+wire [14 : 2 ] AHB_itcm_word_addr_rd = AHB_itcm_addr_rd_from_0[14 : 2 ];
 
 `ifdef ASIC
 /*
@@ -245,18 +269,20 @@ begin
 	if(!rstn)
 	begin
 		instr_itcm_read_data <= 32'h0;
-		data_itcm_read_data <= 32'h0;
+		//data_itcm_read_data <= 32'h0;
+		AHB_itcm_read_data <= 32'h0;
 	end
 	else
 	begin
 		instr_itcm_read_data <= itcm[instr_itcm_word_addr_rd];
-		data_itcm_read_data <= itcm[data_itcm_word_addr_rd];
+		//data_itcm_read_data <= itcm[data_itcm_word_addr_rd];
+		AHB_itcm_read_data <= itcm[AHB_itcm_word_addr_rd];
 	end
 
 end
 `endif
 
-wire dw_same_loc_as_ir = data_itcm_access && data_itcm_rd0_wr1 && (itcm_word_addr_wr == instr_itcm_word_addr_rd);
+wire AHB_wr_same_loc_as_ir = AHB_itcm_wr && (itcm_word_addr_wr == instr_itcm_word_addr_rd);
 
 always @ (posedge clk or negedge rstn)
 begin
@@ -266,10 +292,11 @@ begin
 	end
 	else 
 	begin
-		instr_itcm_read_data_valid <= instr_itcm_access && (~dw_same_loc_as_ir) && (~itcm_auto_load);
+		instr_itcm_read_data_valid <= instr_itcm_access && (~AHB_wr_same_loc_as_ir) && (~itcm_auto_load);
 	end
 end
 
+/*
 always @ (posedge clk or negedge rstn)
 begin
 	if(!rstn)
@@ -281,7 +308,8 @@ begin
 		data_itcm_read_data_valid <= data_itcm_access && (~data_itcm_rd0_wr1) && (~itcm_auto_load);
 	end
 end
+*/
 
-assign data_itcm_ready = ~itcm_auto_load;
+////////////////assign data_itcm_ready = ~itcm_auto_load;
 
 endmodule

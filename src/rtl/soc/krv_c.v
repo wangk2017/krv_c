@@ -165,6 +165,7 @@ wire dma_dtcm_rdata_valid;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA_apb;
 
 
+	 wire HSEL_S0;
 	 wire HSEL_flash;
 	 wire [`AHB_ADDR_WIDTH - 1 : 0] HADDR_flash;
 	 wire [2 : 0] HSIZE_flash;
@@ -172,9 +173,11 @@ wire dma_dtcm_rdata_valid;
 	 wire [1:0] HTRANS_flash;
 	 wire [2:0] HBURST_flash;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HWDATA_flash;
+	 wire HREADY_S0;
 	 wire HREADY_flash;
 	 wire [1:0] HRESP_flash;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA_flash;
+	 wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA_S0;
 
 
 	wire wfi;
@@ -293,7 +296,7 @@ core u_core (
 	.instr_itcm_read_data			(instr_itcm_read_data),
 	.instr_itcm_read_data_valid		(instr_itcm_read_data_valid),
 	.itcm_auto_load				(itcm_auto_load),
-
+/*
 	.data_itcm_rd0_wr1			(data_itcm_rd0_wr1),
 	.data_itcm_byte_strobe			(data_itcm_byte_strobe),
 	.data_itcm_access			(data_itcm_access),
@@ -302,6 +305,7 @@ core u_core (
 	.data_itcm_write_data			(data_itcm_write_data),
 	.data_itcm_read_data			(data_itcm_read_data),
 	.data_itcm_read_data_valid		(data_itcm_read_data_valid),
+*/
 
 	.instr_dtcm_addr			(instr_dtcm_addr),
 	.instr_dtcm_access			(instr_dtcm_access),
@@ -347,6 +351,43 @@ core u_core (
 //-----------------------------------------------------//
 //itcm
 //-----------------------------------------------------//
+wire AHB_itcm_access;
+wire AHB_dtcm_access;
+wire [`AHB_ADDR_WIDTH - 1 : 0] AHB_tcm_addr;
+wire AHB_tcm_rd0_wr1;
+wire [3:0] AHB_tcm_byte_strobe;
+wire [`KPLIC_DATA_WIDTH - 1 : 0] AHB_tcm_write_data;
+wire [`KPLIC_DATA_WIDTH - 1 : 0] AHB_itcm_read_data;
+wire [`KPLIC_DATA_WIDTH - 1 : 0] AHB_dtcm_read_data;
+
+tcm_decoder u_tcm_decoder (
+	.HCLK		(HCLK),
+	.HRESETn	(HRESETn),
+	.HSEL		(HSEL_S0),
+	.HADDR		(HADDR_flash),
+	.HSIZE		(HSIZE_flash),
+	.HTRANS		(HTRANS_flash),
+	.HWRITE		(HWRITE_flash),
+	.HWDATA		(HWDATA_flash),
+	.HREADY		(HREADY_S0),
+	.HRDATA		(HRDATA_S0),
+	.HREADY_flash	(HREADY_flash),
+	.HRDATA_flash	(HRDATA_flash),
+	.HSEL_flash	(HSEL_flash),
+	.itcm_auto_load	(itcm_auto_load),
+	.AHB_itcm_access		(AHB_itcm_access   ),
+	.AHB_dtcm_access		(AHB_dtcm_access   ),
+	.AHB_tcm_addr			(AHB_tcm_addr	   ),
+	.AHB_tcm_byte_strobe		(AHB_tcm_byte_strobe	   ),
+	.AHB_tcm_rd0_wr1		(AHB_tcm_rd0_wr1   ),
+	.AHB_tcm_write_data		(AHB_tcm_write_data),
+	.AHB_itcm_read_data		(AHB_itcm_read_data),
+//	.AHB_dtcm_read_data		(AHB_dtcm_read_data)
+	.AHB_dtcm_read_data		(0)
+
+
+);
+
 `ifdef KRV_HAS_ITCM
 itcm u_itcm(
 	.clk		(cpu_clk_g),
@@ -356,6 +397,7 @@ itcm u_itcm(
 	.instr_itcm_read_data		(instr_itcm_read_data),
 	.instr_itcm_read_data_valid	(instr_itcm_read_data_valid),
 
+/*
 	.data_itcm_rd0_wr1		(data_itcm_rd0_wr1),
 	.data_itcm_byte_strobe		(data_itcm_byte_strobe),
 	.data_itcm_access		(data_itcm_access),
@@ -364,6 +406,14 @@ itcm u_itcm(
 	.data_itcm_write_data	(data_itcm_write_data),
 	.data_itcm_read_data		(data_itcm_read_data),
 	.data_itcm_read_data_valid	(data_itcm_read_data_valid),
+*/
+.AHB_itcm_access		(AHB_itcm_access   ),
+.AHB_tcm_addr			(AHB_tcm_addr	   ),
+.AHB_tcm_byte_strobe		(AHB_tcm_byte_strobe	   ),
+.AHB_tcm_rd0_wr1		(AHB_tcm_rd0_wr1   ),
+.AHB_tcm_write_data		(AHB_tcm_write_data),
+.AHB_itcm_read_data		(AHB_itcm_read_data),
+
 
 	.IAHB_ready	(IAHB_ready),
 	.IAHB_read_data	(IAHB_read_data),
@@ -375,8 +425,7 @@ itcm u_itcm(
 `else 
 assign instr_itcm_read_data_valid = 1'b0;
 assign instr_itcm_read_data = {`DATA_WIDTH {1'b0}};
-assign data_itcm_read_data_valid = 1'b0;
-assign data_itcm_read_data = {`DATA_WIDTH {1'b0}};
+assign AHB_itcm_read_data = {`DATA_WIDTH {1'b0}};
 assign itcm_auto_load = 1'b0;
 assign itcm_auto_load_addr = {`ADDR_WIDTH {1'b0}};
 `endif
@@ -532,15 +581,15 @@ ahb m_ahb(
 `endif
 
 //Slave0
-.HSEL_to_S0		(HSEL_flash	),
+.HSEL_to_S0		(HSEL_S0	),
 .HADDR_to_S0		(HADDR_flash	),
 .HSIZE_to_S0		(HSIZE_flash	),
 .HTRANS_to_S0		(HTRANS_flash	),
 .HWRITE_to_S0		(HWRITE_flash	),
 .HWDATA_to_S0		(HWDATA_flash	),
-.HRDATA_from_S0		(HRDATA_flash	),
+.HRDATA_from_S0		(HRDATA_S0	),
 .HRESP_from_S0		(HRESP_flash	),
-.HREADY_from_S0		(HREADY_flash	),
+.HREADY_from_S0		(HREADY_S0	),
 
 //Slave1
 .HSEL_to_S1		(HSEL_kplic),

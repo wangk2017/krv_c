@@ -51,6 +51,7 @@ module core (
 	input  wire [`DATA_WIDTH - 1 : 0] instr_dtcm_read_data,		//instruction interface access DTCM read data
 	input  wire instr_dtcm_read_data_valid,				//instruction interface access DTCM read data valid
 
+/*
 //data interface access itcm
 	output wire data_itcm_access,					//data interface access ITCM
 	input  wire data_itcm_ready,					//ITCM is ready for data interface access
@@ -60,6 +61,7 @@ module core (
 	output wire [`ADDR_WIDTH - 1 : 0] data_itcm_addr,		//data interface access ITCM address	
 	input  wire [`DATA_WIDTH - 1 : 0] data_itcm_read_data,		//data interface access ITCM read data	
 	input  wire data_itcm_read_data_valid,				//data interface access ITCM read data valid	
+*/
 
 //data interface access dtcm
 	output wire data_dtcm_access,	      				//data interface access DTCM
@@ -544,7 +546,7 @@ dmem_ctrl u_dmem_ctrl (
 .load_data_wb			(load_data_wb ),				
 .load_data_valid_wb		(load_data_valid_wb ),				
 .rd_wb				(rd_wb ),	
-
+/*
 .data_itcm_access		(data_itcm_access),
 .data_itcm_ready		(data_itcm_ready),
 .data_itcm_rd0_wr1		(data_itcm_rd0_wr1),
@@ -553,6 +555,7 @@ dmem_ctrl u_dmem_ctrl (
 .data_itcm_write_data		(data_itcm_write_data),
 .data_itcm_read_data		(data_itcm_read_data),
 .data_itcm_read_data_valid	(data_itcm_read_data_valid),
+*/
 
 .dtcm_en			(dtcm_en),
 .dtcm_start_addr		(dtcm_start_addr),

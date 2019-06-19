@@ -48,7 +48,7 @@ module dtcm (
 	input [`ADDR_WIDTH - 1 : 0] dma_dtcm_addr,		//access address
 	input wire [`DATA_WIDTH - 1 : 0] dma_dtcm_wdata,	//write data
 	output wire [`DATA_WIDTH - 1 : 0] dma_dtcm_rdata,	//read data
-	output reg dma_dtcm_rdata_valid			//read data valid
+	output reg dma_dtcm_rdata_valid				//read data valid
 
 );
 

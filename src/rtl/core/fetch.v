@@ -192,7 +192,7 @@ wire if_stall = 1'b0;
 `endif
 
 assign if_bubble = !instr_read_data_valid || if_stall;
-wire flush_if = jal_dec_r || jalr_ex_r || branch_taken_ex || branch_taken_ex_r || trap | mret || mret_r
+wire flush_if = fence_dec || fence_dec_r || jal_dec_r || jalr_ex_r || branch_taken_ex || branch_taken_ex_r || trap | mret || mret_r
 `ifdef KRV_HAS_DBG
 || ebreak || breakpoint
 `endif

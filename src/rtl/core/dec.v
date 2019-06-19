@@ -1010,6 +1010,9 @@ assign fence_dec = (instruction_is_fence && (funct3_000 || funct3_001)) && !fenc
 reg fence_d1;
 reg fence_d2;
 reg fence_d3;
+reg fence_d4;
+reg fence_d5;
+reg fence_d6;
 always@(posedge cpu_clk or negedge cpu_rstn)
 begin
 	if(!cpu_rstn)
@@ -1017,15 +1020,21 @@ begin
 		fence_d1 <= 1'b0;
 		fence_d2 <= 1'b0;
 		fence_d3 <= 1'b0;
+		fence_d4 <= 1'b0;
+		fence_d5 <= 1'b0;
+		fence_d6 <= 1'b0;
 	end
 	else
 	begin
 		fence_d1 <= fence_dec;
 		fence_d2 <= fence_d1;
 		fence_d3 <= fence_d2;
+		fence_d4 <= fence_d3;
+		fence_d5 <= fence_d4;
+		fence_d6 <= fence_d5;
 	end
 end
-assign fence_stall = fence_d1;
+assign fence_stall = fence_d1 || fence_d2 || fence_d3 || fence_d4 || fence_d5 ;
 
 //stall condition met in DEC stage
 assign dec_stall = wfi_stall || load_hazard_stall || fence_stall

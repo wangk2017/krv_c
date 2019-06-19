@@ -29,6 +29,7 @@ module ahb2regbus (
 	input wire HSEL,
 	input wire [`AHB_ADDR_WIDTH - 1 : 0] HADDR,
 	input wire HWRITE,
+	input wire [2:0] HSIZE,
 	input wire [1:0] HTRANS,
 	input wire [2:0] HBURST,
 	input wire [`AHB_DATA_WIDTH - 1 : 0] HWDATA,
@@ -39,6 +40,7 @@ module ahb2regbus (
 	input wire [`AHB_DATA_WIDTH - 1 : 0] ip_read_data,
 	output wire [`AHB_DATA_WIDTH - 1 : 0] ip_write_data,
 	output reg [`AHB_ADDR_WIDTH - 1 : 0] ip_addr,
+	output reg [3:0] ip_byte_strobe,
 	output reg valid_reg_access,
 	output reg ip_wr1_rd0
 );
@@ -48,10 +50,16 @@ parameter IP_REG_END_OFFSET = 12'h148;
 parameter IP_OFFSET_RANGE_R = 11;
 parameter IP_OFFSET_RANGE_L = 0;
 
+parameter RD_DELAY_1_CYCLE = 0;
+
 //Logic Start
 //IP register is always ready to receive any ahb transaction after reset
+
+wire rd_delay_1 = RD_DELAY_1_CYCLE;
+
 reg hready_r;
 assign HREADY = hready_r;
+
 always @ (posedge HCLK or negedge HRESETn)
 begin
 	if(!HRESETn)
@@ -60,7 +68,17 @@ begin
 	end
 	else
 	begin
-		hready_r <= 1'b1;
+		if(rd_delay_1)
+		begin
+			if(HSEL && !HWRITE)
+				hready_r <= 1'b0;
+			else
+				hready_r <= 1'b1;
+		end
+		else 
+		begin
+			hready_r <= 1'b1;
+		end
 	end
 end
 
@@ -91,11 +109,14 @@ begin
 end
 
 
+reg[2:0] ip_size;
+
 always @ (posedge HCLK or negedge HRESETn)
 begin
 	if(!HRESETn)
 	begin
 		ip_addr <= {`AHB_ADDR_WIDTH{1'b0}};
+		ip_size <= 3'h0;
 		ip_wr1_rd0 <= 1'b0;
 	end
 	else
@@ -103,14 +124,26 @@ begin
 		if(valid_addr_phase)
 		begin
 			ip_addr <= HADDR;
+			ip_size <= HSIZE;
 			ip_wr1_rd0 <= HWRITE;
 		end
 		else
 		begin
 			ip_addr <= {`AHB_ADDR_WIDTH{1'b0}};
+			ip_size <= 3'h0;
 			ip_wr1_rd0 <= 1'b0;
 		end
 	end
+end
+
+always @ *
+begin
+	case (ip_size)
+	3'h0: ip_byte_strobe = 4'b0001 << ip_addr[1:0];
+	3'h1: ip_byte_strobe = 4'b0011 << {ip_addr[1],1'b0};
+	3'h2: ip_byte_strobe = 4'b1111;
+	default: ip_byte_strobe = 4'b0000;
+	endcase
 end
 
 always @ (posedge HCLK or negedge HRESETn)

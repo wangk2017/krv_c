@@ -47,6 +47,7 @@ reg [31:0] golden_value;
 reg[7:0] i;
 reg[7:0] j;
 integer fp_z;
+integer fp_m;
 
 initial
 begin
@@ -125,6 +126,46 @@ begin
 			end
 		end
 	end
+//check memory access by system_bus_access
+	$display ("=============================================\n");
+	$display ("check DM access memory after breakpoint       \n");
+	$display ("=============================================\n");
+		$display ("----------------------------------------------------------------\n");
+		$display ("debugger configure the system access control and status register\n");
+		dtm_write_reg({3'h0,6'h0,1'b0,1'b0,1'b1,3'h2,1'b0,1'b0,3'h0,7'h0,5'h0},`SBCS_ADDR);
+
+	fp_m =$fopen ("./out/ref_mem_values.txt","r");
+	for (j=32; j<48; j=j+1)
+	begin
+
+		$display ("----------------------------------------------------------------\n");
+		$display ("debugger write the read address to system bus address 32:0\n");
+		dtm_write_reg(j*4,`SBADDR0_ADDR);
+
+
+@(posedge DUT.cpu_clk);
+@(posedge DUT.cpu_clk);
+@(posedge DUT.cpu_clk);
+
+		$display ("debugger read the return value from sbdata0\n");
+		dtm_read_reg(`SBDATA0_ADDR);
+
+		@(posedge DUT.u_dm.u_dm_regs.dm_resp_valid);
+		begin
+			$fscanf(fp_m, "%h", golden_value);
+			if(DUT.u_dm.u_dm_regs.dm_resp_bits[31:0] == golden_value)
+			begin
+			$display ("mem[%h] compare PASS! \n", j*4);
+			$display ("-----------------------------------------\n");
+			end
+			else
+			begin
+			$display ("mem[%h] compare FAIL!\nmem[%h] = %h, golden_value = %h \n",j*4,j*4,DUT.u_dm.u_dm_regs.dm_resp_bits[31:0],golden_value);
+			$display ("-----------------------------------------\n");
+			end
+		end
+	end
+
 
 	$fclose(fp_z);
 	$stop;

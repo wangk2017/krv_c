@@ -112,12 +112,7 @@ begin
 	case(state)
 		WAIT_FOR_GRANT_S: 
 		begin
-			if( HGRANT && HREADY)
-			begin
-				next_state = DATA_S;
-				hwrite = hwrite_i;
-			end
-			else if(HBUSREQ && HGRANT && HREADY)
+			if(HBUSREQ && HGRANT && HREADY)
 			begin
 				next_state = ADDR_S;
 				hwrite = hwrite_i;

@@ -359,9 +359,11 @@ wire AHB_dtcm_access;
 wire [`AHB_ADDR_WIDTH - 1 : 0] AHB_tcm_addr;
 wire AHB_tcm_rd0_wr1;
 wire [3:0] AHB_tcm_byte_strobe;
-wire [`KPLIC_DATA_WIDTH - 1 : 0] AHB_tcm_write_data;
-wire [`KPLIC_DATA_WIDTH - 1 : 0] AHB_itcm_read_data;
-wire [`KPLIC_DATA_WIDTH - 1 : 0] AHB_dtcm_read_data;
+wire [`DATA_WIDTH - 1 : 0] AHB_tcm_write_data;
+wire [`DATA_WIDTH - 1 : 0] AHB_itcm_read_data;
+wire [`DATA_WIDTH - 1 : 0] AHB_dtcm_read_data;
+wire  AHB_dtcm_read_data_valid;
+wire  AHB_itcm_read_data_valid;
 
 tcm_decoder u_tcm_decoder (
 	.HCLK		(HCLK),
@@ -385,10 +387,9 @@ tcm_decoder u_tcm_decoder (
 	.AHB_tcm_rd0_wr1		(AHB_tcm_rd0_wr1   ),
 	.AHB_tcm_write_data		(AHB_tcm_write_data),
 	.AHB_itcm_read_data		(AHB_itcm_read_data),
-//	.AHB_dtcm_read_data		(AHB_dtcm_read_data)
-	.AHB_dtcm_read_data		(0)
-
-
+	.AHB_itcm_read_data_valid	(AHB_itcm_read_data_valid),
+	.AHB_dtcm_read_data		(AHB_dtcm_read_data),
+	.AHB_dtcm_read_data_valid	(AHB_dtcm_read_data_valid)
 );
 
 `ifdef KRV_HAS_ITCM
@@ -416,6 +417,7 @@ itcm u_itcm(
 .AHB_tcm_rd0_wr1		(AHB_tcm_rd0_wr1   ),
 .AHB_tcm_write_data		(AHB_tcm_write_data),
 .AHB_itcm_read_data		(AHB_itcm_read_data),
+.AHB_itcm_read_data_valid	(AHB_itcm_read_data_valid),
 
 
 	.IAHB_ready	(IAHB_ready),
@@ -454,6 +456,7 @@ dtcm u_dtcm (
 	.AHB_tcm_rd0_wr1	(AHB_tcm_rd0_wr1   ),
 	.AHB_tcm_wdata		(AHB_tcm_write_data),
 	.AHB_dtcm_rdata		(AHB_dtcm_read_data),
+	.AHB_dtcm_rdata_valid	(AHB_dtcm_read_data_valid),
 
 
 /*

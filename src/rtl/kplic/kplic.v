@@ -83,6 +83,7 @@ ahb2regbus u_ahb2regbus(
 	.HRDATA			(HRDATA),
 	//IP reg bus
 	.ip_read_data		(kplic_reg_read_data),
+	.ip_read_data_valid	(1'b1),
 	.ip_write_data		(kplic_reg_write_data),
 	.ip_addr		(ip_addr),
 	.valid_reg_access	(valid_reg_access),

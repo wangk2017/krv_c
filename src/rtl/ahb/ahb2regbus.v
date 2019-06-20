@@ -38,6 +38,7 @@ module ahb2regbus (
 	output wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA,
 	//IP reg bus
 	input wire [`AHB_DATA_WIDTH - 1 : 0] ip_read_data,
+	input wire ip_read_data_valid,
 	output wire [`AHB_DATA_WIDTH - 1 : 0] ip_write_data,
 	output reg [`AHB_ADDR_WIDTH - 1 : 0] ip_addr,
 	output reg [3:0] ip_byte_strobe,
@@ -50,27 +51,27 @@ parameter IP_REG_END_OFFSET = 12'h148;
 parameter IP_OFFSET_RANGE_R = 11;
 parameter IP_OFFSET_RANGE_L = 0;
 
-parameter RD_DELAY_1_CYCLE = 0;
+//parameter RD_DELAY_1_CYCLE = 0;
 
 //Logic Start
 //IP register is always ready to receive any ahb transaction after reset
 
-wire rd_delay_1 = RD_DELAY_1_CYCLE;
+//wire rd_delay_1 = RD_DELAY_1_CYCLE;
 
-reg hready_r;
-assign HREADY = hready_r;
+assign HREADY = ip_read_data_valid;
 
+/*
 always @ (posedge HCLK or negedge HRESETn)
 begin
 	if(!HRESETn)
 	begin
-		hready_r <= 1'b0;
+		hready_r <= 1'b1;
 	end
 	else
 	begin
 		if(rd_delay_1)
 		begin
-			if(HSEL && !HWRITE)
+			if(HSEL && !HWRITE &&  hready_r)
 				hready_r <= 1'b0;
 			else
 				hready_r <= 1'b1;
@@ -81,6 +82,7 @@ begin
 		end
 	end
 end
+*/
 
 wire valid_ahb_addr;
 wire valid_ahb_ctrl;

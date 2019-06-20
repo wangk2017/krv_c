@@ -53,6 +53,7 @@ input wire [3:0] AHB_tcm_byte_strobe,
 input wire AHB_tcm_rd0_wr1,
 input wire [`KPLIC_DATA_WIDTH - 1 : 0] AHB_tcm_write_data,
 output reg [`KPLIC_DATA_WIDTH - 1 : 0] AHB_itcm_read_data,
+output reg AHB_itcm_read_data_valid,
 
 
 //for auto-load
@@ -296,19 +297,17 @@ begin
 	end
 end
 
-/*
 always @ (posedge clk or negedge rstn)
 begin
 	if(!rstn)
 	begin
-		data_itcm_read_data_valid <= 1'b0;	
+		AHB_itcm_read_data_valid <= 1'b0;	
 	end
 	else 
 	begin
-		data_itcm_read_data_valid <= data_itcm_access && (~data_itcm_rd0_wr1) && (~itcm_auto_load);
+		AHB_itcm_read_data_valid <= AHB_itcm_access && (~AHB_tcm_rd0_wr1) && (~itcm_auto_load);
 	end
 end
-*/
 
 ////////////////assign data_itcm_ready = ~itcm_auto_load;
 

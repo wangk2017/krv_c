@@ -46,7 +46,9 @@ output wire [3:0] AHB_tcm_byte_strobe,
 output wire AHB_tcm_rd0_wr1,
 output wire [`DATA_WIDTH - 1 : 0] AHB_tcm_write_data,
 input wire [`DATA_WIDTH - 1 : 0] AHB_itcm_read_data,
+input wire AHB_itcm_read_data_valid,
 input wire [`DATA_WIDTH - 1 : 0] AHB_dtcm_read_data,
+input wire AHB_dtcm_read_data_valid,
 output wire HSEL_flash,
 input wire  HREADY_flash,
 input wire [`DATA_WIDTH - 1 : 0] HRDATA_flash
@@ -55,6 +57,7 @@ input wire [`DATA_WIDTH - 1 : 0] HRDATA_flash
 
 
 wire [`DATA_WIDTH - 1 : 0] AHB_tcm_read_data;
+wire AHB_tcm_read_data_valid;
 wire valid_reg_access;
 
 wire HREADY_tcm;
@@ -75,6 +78,7 @@ ahb2regbus #(.RD_DELAY_1_CYCLE(1),.IP_REG_END_OFFSET(12'hFFF))  u_ahb2regbus(
 	.HRDATA			(HRDATA),
 	//IP reg bus
 	.ip_read_data		(AHB_tcm_read_data),
+	.ip_read_data_valid	(AHB_tcm_read_data_valid),
 	.ip_write_data		(AHB_tcm_write_data),
 	.ip_addr		(AHB_tcm_addr),
 	.ip_byte_strobe		(AHB_tcm_byte_strobe),
@@ -117,6 +121,7 @@ begin
 end
 
 assign AHB_tcm_read_data = AHB_dtcm_access_r ? AHB_dtcm_read_data : (AHB_itcm_access_r ? AHB_itcm_read_data : HRDATA_flash);
+assign AHB_tcm_read_data_valid = (AHB_dtcm_access || AHB_dtcm_access_r ) ? AHB_dtcm_read_data_valid : ((AHB_itcm_access || AHB_itcm_access_r)? AHB_itcm_read_data_valid : valid_reg_access);
 
 assign HREADY = (AHB_dtcm_access || AHB_itcm_access ) ? HREADY_tcm : HREADY_flash;
 

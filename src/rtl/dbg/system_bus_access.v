@@ -73,12 +73,24 @@ wire hwrite_i = sbdata0_update;
 wire hbusreq_i = sbdata0_rd || sbdata0_update || (sbaddress0_update && sbreadonaddr) && !sbbusy;
 wire [1:0] htrans_i = HGRANT ? `NONSEQ : `IDLE;
 wire [2:0] hsize_i = sbaccess;
+reg  [`DM_REG_WIDTH - 1 : 0]	sbdata0_r;
+always @ (posedge HCLK or negedge HRESETn)
+begin
+	if(!HRESETn)
+	begin
+		sbdata0_r <= 32'h0;
+	end
+	else
+	begin
+		sbdata0_r <= sbdata0;
+	end
+end
 
 assign HBUSREQ 	= hbusreq_i;
 assign HWRITE 	= hwrite_i;
 assign HTRANS 	= htrans_i;
 assign HADDR 	= sbaddress0;
-assign HWDATA 	= sbdata0;
+assign HWDATA 	= sbdata0_r;
 assign HSIZE 	= hsize_i;
 assign HBURST 	= 3'b000;
 assign HPROT 	= 4'b1111;

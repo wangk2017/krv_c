@@ -48,6 +48,7 @@ reg[7:0] i;
 reg[7:0] j;
 integer fp_z;
 integer fp_m;
+integer fp_w;
 
 initial
 begin
@@ -126,9 +127,10 @@ begin
 			end
 		end
 	end
-//check memory access by system_bus_access
+	$fclose(fp_z);
+//check memory read by system_bus_access
 	$display ("=============================================\n");
-	$display ("check DM access memory after breakpoint       \n");
+	$display ("check DM read memory after breakpoint       \n");
 	$display ("=============================================\n");
 		$display ("----------------------------------------------------------------\n");
 		$display ("debugger configure the system access control and status register\n");
@@ -137,7 +139,6 @@ begin
 	fp_m =$fopen ("./out/ref_mem_values.txt","r");
 	for (j=32; j<48; j=j+1)
 	begin
-
 		$display ("----------------------------------------------------------------\n");
 		$display ("debugger write the read address to system bus address 32:0\n");
 		dtm_write_reg(j*4,`SBADDR0_ADDR);
@@ -165,9 +166,88 @@ begin
 			end
 		end
 	end
+$fclose(fp_z);
+
+//check memory write by system_bus_access
+	$display ("=============================================\n");
+	$display ("check DM write itcm                        	\n");
+	$display ("=============================================\n");
+	fp_w =$fopen ("./tb/dbg_test_value.txt","r");
+	for (j=48; j<64; j=j+1)
+	begin
+		$fscanf(fp_w, "%h", golden_value);
+		$display ("----------------------------------------------------------------\n");
+		$display ("debugger write the address to system bus address 32:0\n");
+		dtm_write_reg(j*4,`SBADDR0_ADDR);
+		$display ("debugger write the value to sbdata0\n");
+		dtm_write_reg(golden_value, `SBDATA0_ADDR);
+		@(posedge DUT.cpu_clk);
+		@(posedge DUT.cpu_clk);
+		@(posedge DUT.cpu_clk);
+		$display ("debugger read on SBADDR0 update\n");
+		dtm_write_reg(j*4,`SBADDR0_ADDR);
+		@(posedge DUT.cpu_clk);
+		@(posedge DUT.cpu_clk);
+		@(posedge DUT.cpu_clk);
+		$display ("debugger read the return value from sbdata0\n");
+		dtm_read_reg(`SBDATA0_ADDR);
+
+		@(posedge DUT.u_dm.u_dm_regs.dm_resp_valid);
+		begin
+			if(DUT.u_dm.u_dm_regs.dm_resp_bits[31:0] == golden_value)
+			begin
+			$display ("mem[%h] compare PASS! \n", j*4);
+			$display ("-----------------------------------------\n");
+			end
+			else
+			begin
+			$display ("mem[%h] compare FAIL!\nmem[%h] = %h, golden_value = %h \n",j*4,j*4,DUT.u_dm.u_dm_regs.dm_resp_bits[31:0],golden_value);
+			$display ("-----------------------------------------\n");
+			end
+		end
+	end
+	$fclose(fp_w);
+
+	$display ("=============================================\n");
+	$display ("check DM write dtcm                        	\n");
+	$display ("=============================================\n");
+	fp_w =$fopen ("./tb/dbg_test_value.txt","r");
+	for (j=0; j<16; j=j+1)
+	begin
+		$fscanf(fp_w, "%h", golden_value);
+		$display ("----------------------------------------------------------------\n");
+		$display ("debugger write the address to system bus address 32:0\n");
+		dtm_write_reg(32'h40000 + j*4,`SBADDR0_ADDR);
+		$display ("debugger write the value to sbdata0\n");
+		dtm_write_reg(golden_value, `SBDATA0_ADDR);
+		@(posedge DUT.cpu_clk);
+		@(posedge DUT.cpu_clk);
+		@(posedge DUT.cpu_clk);
+		$display ("debugger read on SBADDR0 update\n");
+		dtm_write_reg(32'h40000 + j*4,`SBADDR0_ADDR);
+		@(posedge DUT.cpu_clk);
+		@(posedge DUT.cpu_clk);
+		@(posedge DUT.cpu_clk);
+		$display ("debugger read the return value from sbdata0\n");
+		dtm_read_reg(`SBDATA0_ADDR);
+
+		@(posedge DUT.u_dm.u_dm_regs.dm_resp_valid);
+		begin
+			if(DUT.u_dm.u_dm_regs.dm_resp_bits[31:0] == golden_value)
+			begin
+			$display ("mem[%h] compare PASS! \n", 32'h40000 + j*4);
+			$display ("-----------------------------------------\n");
+			end
+			else
+			begin
+			$display ("mem[%h] compare FAIL!\nmem[%h] = %h, golden_value = %h \n",32'h40000 + j*4,j*4,DUT.u_dm.u_dm_regs.dm_resp_bits[31:0],golden_value);
+			$display ("-----------------------------------------\n");
+			end
+		end
+	end
+	$fclose(fp_w);
 
 
-	$fclose(fp_z);
 	$stop;
 end
 end

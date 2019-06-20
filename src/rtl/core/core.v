@@ -45,11 +45,13 @@ module core (
 	input  wire instr_itcm_read_data_valid,				//instruction interface access ITCM read data valid
 	input  wire itcm_auto_load,					//ITCM is in auto-load process
 
+/*
 //instr_dec interface access dtcm
 	output wire instr_dtcm_access,					//instruction interface access DTCM
 	output wire [`ADDR_WIDTH - 1 : 0] instr_dtcm_addr,		//instruction interface access DTCM address
 	input  wire [`DATA_WIDTH - 1 : 0] instr_dtcm_read_data,		//instruction interface access DTCM read data
 	input  wire instr_dtcm_read_data_valid,				//instruction interface access DTCM read data valid
+*/
 
 /*
 //data interface access itcm
@@ -298,12 +300,14 @@ imem_ctrl u_imem_ctrl(
 .instr_itcm_read_data		(instr_itcm_read_data),
 .instr_itcm_read_data_valid	(instr_itcm_read_data_valid),
 .itcm_auto_load			(itcm_auto_load),
+/*
 .dtcm_en			(dtcm_en),
 .dtcm_start_addr		(dtcm_start_addr),
 .instr_dtcm_access		(instr_dtcm_access),	
 .instr_dtcm_addr		(instr_dtcm_addr),
 .instr_dtcm_read_data		(instr_dtcm_read_data),
 .instr_dtcm_read_data_valid	(instr_dtcm_read_data_valid),
+*/
 .IAHB_access			(IAHB_access),	
 .IAHB_addr			(IAHB_addr),
 .IAHB_read_data			(IAHB_read_data),

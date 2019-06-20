@@ -41,6 +41,7 @@ input wire [`INSTR_WIDTH - 1 : 0] instr_itcm_read_data,	//ITCM read data
 input wire instr_itcm_read_data_valid,			//ITCM read data valid
 input wire itcm_auto_load,			//ITCM is in auto-load process
 
+/*
 //interface with DTCM
 input wire dtcm_en,					//DTCM enable
 input wire [`ADDR_WIDTH - 1 : 0] dtcm_start_addr,	//DTCM start address
@@ -48,6 +49,7 @@ output instr_dtcm_access,				//DTCM access signal
 output [`ADDR_WIDTH - 1 : 0] instr_dtcm_addr,		//DTCM access address
 input wire [`DATA_WIDTH - 1 : 0] instr_dtcm_read_data,	//DTCM read data
 input wire instr_dtcm_read_data_valid,			//DTCM read data valid
+*/
 
 //interface with IAHB
 output wire IAHB_access,				//IAHB access 
@@ -63,24 +65,26 @@ input wire IAHB_read_data_valid				//IAHB read data valid
 //address decoder
 //---------------------------------------------//
 wire addr_itcm;
-wire addr_dtcm;
+//wire addr_dtcm;
 `ifdef KRV_HAS_ITCM
 assign addr_itcm =(next_pc >= `ITCM_START_ADDR) && (next_pc < `ITCM_START_ADDR + `ITCM_SIZE);
 `else
 assign addr_itcm = 1'b0;
 `endif
 
+/*
 `ifdef KRV_HAS_DTCM
 assign addr_dtcm = dtcm_en && ( (next_pc < dtcm_start_addr + `DTCM_SIZE) && (next_pc >= dtcm_start_addr));
 `else 
 assign addr_dtcm = 1'b0;
 `endif
+*/
 
 wire addr_AHB;
-assign addr_AHB = ~(addr_itcm | addr_dtcm);
+assign addr_AHB = ~(addr_itcm/* | addr_dtcm*/);
 
 reg addr_itcm_r;
-reg addr_dtcm_r;
+//reg addr_dtcm_r;
 reg addr_AHB_r;
 
 always @ (posedge cpu_clk or negedge cpu_rstn)
@@ -88,13 +92,13 @@ begin
 	if(!cpu_rstn)
 	begin
 		addr_itcm_r <= 1'b0;
-		addr_dtcm_r <= 1'b0;
+//		addr_dtcm_r <= 1'b0;
 		addr_AHB_r <= 1'b0;
 	end
 	else
 	begin
 		addr_itcm_r <= addr_itcm;
-		addr_dtcm_r <= addr_dtcm;
+//		addr_dtcm_r <= addr_dtcm;
 		addr_AHB_r <= addr_AHB;
 	end
 end
@@ -105,8 +109,10 @@ end
 assign instr_itcm_access = addr_itcm;
 assign instr_itcm_addr = next_pc;
 
+/*
 assign instr_dtcm_access = addr_dtcm;
 assign instr_dtcm_addr = next_pc;
+*/
 
 assign IAHB_access = addr_AHB_r;
 assign IAHB_addr = pc;
@@ -115,8 +121,8 @@ assign IAHB_addr = pc;
 //read data MUX 
 //---------------------------------------------//
 assign instr_read_data = ({`INSTR_WIDTH{(addr_itcm_r & instr_itcm_read_data_valid)}} & instr_itcm_read_data)
-			|({`INSTR_WIDTH{(addr_dtcm_r & instr_dtcm_read_data_valid)}} & instr_dtcm_read_data) 
+		//	|({`INSTR_WIDTH{(addr_dtcm_r & instr_dtcm_read_data_valid)}} & instr_dtcm_read_data) 
 			|({`INSTR_WIDTH{(!itcm_auto_load & addr_AHB_r &  IAHB_read_data_valid)}} & IAHB_read_data);
-assign instr_read_data_valid = (addr_itcm_r && instr_itcm_read_data_valid) || (addr_dtcm_r && instr_dtcm_read_data_valid) || (!itcm_auto_load && addr_AHB_r && IAHB_read_data_valid);
+assign instr_read_data_valid = (addr_itcm_r && instr_itcm_read_data_valid) ||/* (addr_dtcm_r && instr_dtcm_read_data_valid) || */(!itcm_auto_load && addr_AHB_r && IAHB_read_data_valid);
 
 endmodule

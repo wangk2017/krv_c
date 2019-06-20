@@ -92,10 +92,12 @@ wire dma_dtcm_rdata_valid;
 	wire [`DATA_WIDTH - 1 : 0] instr_itcm_read_data;
 	wire instr_itcm_read_data_valid;
 
+/*
 	wire instr_dtcm_access;
 	wire [`ADDR_WIDTH - 1 : 0] instr_dtcm_addr;
 	wire [`DATA_WIDTH - 1 : 0] instr_dtcm_read_data;
 	wire instr_dtcm_read_data_valid;
+*/
 
 	wire IAHB_ready;
 	wire itcm_auto_load;
@@ -306,11 +308,12 @@ core u_core (
 	.data_itcm_read_data			(data_itcm_read_data),
 	.data_itcm_read_data_valid		(data_itcm_read_data_valid),
 */
-
+/*
 	.instr_dtcm_addr			(instr_dtcm_addr),
 	.instr_dtcm_access			(instr_dtcm_access),
 	.instr_dtcm_read_data			(instr_dtcm_read_data),
 	.instr_dtcm_read_data_valid		(instr_dtcm_read_data_valid),
+*/
 
 	.data_dtcm_rd0_wr1			(data_dtcm_rd0_wr1),
 	.data_dtcm_byte_strobe			(data_dtcm_byte_strobe),
@@ -440,15 +443,25 @@ dtcm u_dtcm (
 	.data_dtcm_access	(data_dtcm_access),
 	.data_dtcm_ready	(data_dtcm_ready),
 	.data_dtcm_rd0_wr1	(data_dtcm_rd0_wr1),
-	.data_dtcm_byte_strobe		(data_dtcm_byte_strobe),
+	.data_dtcm_byte_strobe	(data_dtcm_byte_strobe),
 	.data_dtcm_addr		(data_dtcm_addr),
 	.data_dtcm_wdata	(data_dtcm_write_data),
 	.data_dtcm_rdata	(data_dtcm_read_data),
 	.data_dtcm_rdata_valid	(data_dtcm_read_data_valid),
+	.AHB_dtcm_access	(AHB_dtcm_access   ),
+	.AHB_tcm_addr		(AHB_tcm_addr	   ),
+	.AHB_tcm_byte_strobe	(AHB_tcm_byte_strobe	   ),
+	.AHB_tcm_rd0_wr1	(AHB_tcm_rd0_wr1   ),
+	.AHB_tcm_wdata		(AHB_tcm_write_data),
+	.AHB_dtcm_rdata		(AHB_dtcm_read_data),
+
+
+/*
 	.instr_dtcm_addr	(instr_dtcm_addr),
 	.instr_dtcm_access	(instr_dtcm_access),
 	.instr_dtcm_rdata	(instr_dtcm_read_data),
 	.instr_dtcm_rdata_valid(instr_dtcm_read_data_valid),
+*/
 	.dma_dtcm_access	(dma_dtcm_access),
 	.dma_dtcm_ready		(dma_dtcm_ready),
 	.dma_dtcm_rd0_wr1	(dma_dtcm_rd0_wr1),
@@ -459,8 +472,11 @@ dtcm u_dtcm (
 
 );
 `else
+/*
 assign instr_dtcm_read_data_valid = 1'b0;
 assign instr_dtcm_read_data = {`DATA_WIDTH {1'b0}};
+*/
+assign AHB_dtcm_read_data = {`DATA_WIDTH {1'b0}};
 assign data_dtcm_read_data_valid = 1'b0;
 assign data_dtcm_read_data = {`DATA_WIDTH {1'b0}};
 assign dma_dtcm_read_data_valid = 1'b0;

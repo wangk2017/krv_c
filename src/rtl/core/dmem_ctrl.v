@@ -67,17 +67,6 @@ output wire [`DATA_WIDTH - 1 : 0]  data_dtcm_write_data,	//DTCM write data
 output wire [`ADDR_WIDTH - 1 : 0] data_dtcm_addr,		//DTCM access address
 input wire [`DATA_WIDTH - 1 : 0] data_dtcm_read_data,		//DTCM read data
 input wire data_dtcm_read_data_valid,				//DTCM read data valid
-/*
-//interface with ITCM block
-output wire data_itcm_access,					//ITCM access
-input wire data_itcm_ready,					//ITCM ready signal
-output wire data_itcm_rd0_wr1,					//ITCM cmd read: 0 write:1
-output wire [3:0] data_itcm_byte_strobe,			//ITCM byte strobe
-output wire [`DATA_WIDTH - 1 : 0]  data_itcm_write_data,	//ITCM write data
-output wire [`ADDR_WIDTH - 1 : 0] data_itcm_addr,		//ITCM access address
-input wire [`DATA_WIDTH - 1 : 0] data_itcm_read_data,		//ITCM read data
-input wire data_itcm_read_data_valid,				//ITCM read data valid
-*/
 
 //interface with DAHB block
 output wire DAHB_access,					//DAHB access
@@ -121,13 +110,6 @@ assign mem_access = (load_mem || store_mem) && (!load_wait_data_r);
 //wire addr_itcm;
 wire addr_dtcm;
 wire addr_AHB;
-/*
-`ifdef KRV_HAS_ITCM
-assign addr_itcm = (mem_addr_mem >= `ITCM_START_ADDR) && (mem_addr_mem < `ITCM_START_ADDR + `ITCM_SIZE);
-`else
-assign addr_itcm = 1'b0;
-`endif
-*/
 
 `ifdef KRV_HAS_DTCM
 assign addr_dtcm = dtcm_en && (mem_addr_mem >= dtcm_start_addr) && (mem_addr_mem < (dtcm_start_addr + `DTCM_SIZE));
@@ -135,7 +117,7 @@ assign addr_dtcm = dtcm_en && (mem_addr_mem >= dtcm_start_addr) && (mem_addr_mem
 assign addr_dtcm = 1'b0;
 `endif
 
-assign addr_AHB = ~(addr_dtcm /*| addr_itcm*/);
+assign addr_AHB = ~(addr_dtcm );
 
 //reg addr_itcm_r;
 reg addr_dtcm_r;
@@ -145,13 +127,11 @@ always @ (posedge cpu_clk or negedge cpu_rstn)
 begin
 	if(!cpu_rstn)
 	begin
-//		addr_itcm_r <= 1'b0;
 		addr_dtcm_r <= 1'b0;
 		addr_AHB_r <= 1'b0;
 	end
 	else
 	begin
-//		addr_itcm_r <= addr_itcm;
 		addr_dtcm_r <= addr_dtcm;
 		addr_AHB_r <= addr_AHB;
 	end
@@ -162,14 +142,14 @@ end
 //Store
 //-----------------//
 
-wire rd0_wr1;			//read: 0 write:1
+wire rd0_wr1;								//read: 0 write:1
 reg [`DATA_WIDTH - 1 : 0]  mem_write_data;
 wire [3:0] mem_byte_strobe;
 
 
-assign mem_byte_strobe = mem_B_mem ? (4'b0001<<mem_addr_mem[1:0]) : //for byte access
-			(mem_H_mem ? (4'b0011<<{mem_addr_mem[1],1'b0}) : //for half-word access
-			4'b1111);				    //for word access
+assign mem_byte_strobe = mem_B_mem ? (4'b0001<<mem_addr_mem[1:0]) : 		//for byte access
+			(mem_H_mem ? (4'b0011<<{mem_addr_mem[1],1'b0}) : 	//for half-word access
+			4'b1111);				   		//for word access
 
 reg mem_U_mem_r;
 reg mem_B_mem_r;
@@ -223,20 +203,13 @@ end
 always @ *
 begin
 	case ({mem_H_mem,mem_B_mem})
-	2'b00: mem_write_data = store_data_mem;	 	//for word access
+	2'b00: mem_write_data = store_data_mem;	 	 //for word access
 	2'b01: mem_write_data = store_data_for_sb;	 //for byte access
 	2'b10: mem_write_data = store_data_for_sh;	 //for half-word access
 	default: mem_write_data = {`DATA_WIDTH{1'b0}};
 	endcase
 end			
 
-/*
-assign data_itcm_access 	= mem_access && addr_itcm; 
-assign data_itcm_rd0_wr1 	= rd0_wr1;
-assign data_itcm_write_data 	= mem_write_data;
-assign data_itcm_addr 		= mem_addr_mem;
-assign data_itcm_byte_strobe 	= mem_byte_strobe;
-*/
 
 assign data_dtcm_access 	= mem_access && addr_dtcm; 
 assign data_dtcm_rd0_wr1 	= rd0_wr1;

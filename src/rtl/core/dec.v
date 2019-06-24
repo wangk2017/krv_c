@@ -122,19 +122,19 @@ output reg wfi							// WFI
 //debug interface
 `ifdef KRV_HAS_DBG
 ,
-input				breakpoint,
-input [`DATA_WIDTH - 1 : 0] 	d_regs_read_data,
-input  				dbg_mode,
-input				single_step_d1,
-input				single_step_d2,
-input				single_step_d3,
-output 				dret,
-input				dbg_reg_access,
-input 				dbg_wr1_rd0,
-input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
-input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
-output				dbg_read_data_valid,
-output[`DATA_WIDTH - 1 : 0]	dbg_read_data
+input wire				breakpoint,		//breakpoint met
+input wire [`DATA_WIDTH - 1 : 0] 	d_regs_read_data,	//debug trigger register read data
+input wire  				dbg_mode,		//debug mode
+input wire				single_step_d1,		//single step delay 1cycle
+input wire				single_step_d2,		//single step delay 2cycle
+input wire				single_step_d3,		//single step delay 3cycle
+output wire				dret,			//dret
+input wire				dbg_reg_access,		//debugger access register			
+input wire 				dbg_wr1_rd0,    	//debugger access register cmd 0: read; 1: write
+input wire[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,      	//debugger access register number
+input wire[`DATA_WIDTH - 1 : 0]		dbg_write_data, 	//debugger access register write data
+output wire[`DATA_WIDTH - 1 : 0]	dbg_read_data,  	//debugger access register read data
+output wire				dbg_read_data_valid	//debugger access register read data valid		
 `endif
 
 );
@@ -646,7 +646,6 @@ begin
 	end
 	else
 	begin
-		//if (flush_dec)
 		if (jalr_ex || exception_met)
 			begin
 				beq_ex <= 1'b0;
@@ -850,6 +849,7 @@ reg wfi_delay1;
 reg wfi_delay2;
 reg wfi_stall_delay;
 
+//wfi act as NOP in debug mode
 wire wfi_i;
 assign wfi_i =  ((instruction_is_system && funct12_wfi && funct3_000) && !branch_taken_ex)
 `ifdef KRV_HAS_DBG

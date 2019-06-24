@@ -42,12 +42,12 @@ output [`DATA_WIDTH - 1 : 0] gprs_data2 	//source 2 data from gprs
 //debug interface
 `ifdef KRV_HAS_DBG
 ,
-input				dbg_reg_access,
-input 				dbg_wr1_rd0,
-input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
-input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
-output				dbg_read_data_valid,
-output[`DATA_WIDTH - 1 : 0]	dbg_read_data
+input				dbg_reg_access,		//debugger access register	
+input 				dbg_wr1_rd0,		//debugger access register cmd 0: read; 1: write
+input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,		//debugger access register number
+input[`DATA_WIDTH - 1 : 0]	dbg_write_data,		//debugger access register write data
+output[`DATA_WIDTH - 1 : 0]	dbg_read_data,		//debugger access register read data
+output				dbg_read_data_valid	//debugger access register read data valid
 `endif
 
 );

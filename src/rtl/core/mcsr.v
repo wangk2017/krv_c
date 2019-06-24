@@ -73,18 +73,18 @@ output reg [`ADDR_WIDTH - 1 : 0] dtcm_start_addr	//dtcm start address
 input wire [`ADDR_WIDTH - 1 : 0] pc_ex,			// Program counter value at EX stage
 input wire [`ADDR_WIDTH - 1 : 0] pc_dec,		// Program counter value at DEC stage
 
-input					breakpoint,
-input					ebreak,
-output reg 				step,
-output reg [`ADDR_WIDTH - 1 : 0]	dpc,
-input					dbg_mode,
-input					dbg_reg_access,
-input 					dbg_wr1_rd0,
-input[`CMD_REGNO_SIZE - 1 : 0]		dbg_regno,
-input[`DATA_WIDTH - 1 : 0]		dbg_write_data,
-output                     		dbg_read_data_valid,
-output[`DATA_WIDTH - 1 : 0]		dbg_read_data,
-output					dbg_wr
+input					breakpoint,		//breakpoint met
+input					ebreak,			//ebreak instruction
+output reg 				step,			//step for single step
+output reg [`ADDR_WIDTH - 1 : 0]	dpc,			//dpc
+input					dbg_mode,		//debug mode
+input					dbg_reg_access,		//debugger access register			
+input 					dbg_wr1_rd0,		//debugger access register cmd 0: read; 1: write
+input[`CMD_REGNO_SIZE - 1 : 0]		dbg_regno,		//debugger access register number
+input[`DATA_WIDTH - 1 : 0]		dbg_write_data,		//debugger access register write data
+output[`DATA_WIDTH - 1 : 0]		dbg_read_data,  	//debugger access register read data
+output                     		dbg_read_data_valid,	//debugger access register read data valid
+output					dbg_wr			//debugger write csrs				
 `endif
 
 );

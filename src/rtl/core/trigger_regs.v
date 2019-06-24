@@ -41,27 +41,25 @@ input wire mcsr_set,					//mcsr set
 input wire mcsr_clr,					//mcsr clear
 input wire [`DATA_WIDTH - 1 : 0] write_data,		//mcsr write data
 output wire [`DATA_WIDTH - 1 : 0] read_data,		//mcsr read data
-input [`DATA_WIDTH - 1 : 0] mctrl_rd_data,
-output reg tselect,
-output reg [`DATA_WIDTH - 1 : 0] tdata1,
-output reg [`DATA_WIDTH - 1 : 0] tdata2_t0,
-output reg [`DATA_WIDTH - 1 : 0] tdata3_t0,
-output reg [`DATA_WIDTH - 1 : 0] tdata2_t1,
-output reg [`DATA_WIDTH - 1 : 0] tdata3_t1
+input [`DATA_WIDTH - 1 : 0] mctrl_rd_data,		//mctrl read data
+output reg tselect,					//tselect
+output reg [`DATA_WIDTH - 1 : 0] tdata1,		//tdata1
+output reg [`DATA_WIDTH - 1 : 0] tdata2_t0,		//tdata2 for trigger0
+output reg [`DATA_WIDTH - 1 : 0] tdata3_t0,		//tdata3 for trigger0
+output reg [`DATA_WIDTH - 1 : 0] tdata2_t1,		//tdata2 for trigger1
+output reg [`DATA_WIDTH - 1 : 0] tdata3_t1		//tdata3 for trigger1
 
 
-//`ifdef KRV_HAS_DBG
 //debug interface
 ,
-input				dbg_mode,
-input				dbg_reg_access,
-input 				dbg_wr1_rd0,
-input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,
-input[`DATA_WIDTH - 1 : 0]	dbg_write_data,
-output                     	dbg_read_data_valid,
-output[`DATA_WIDTH - 1 : 0]	dbg_read_data,
-output				dbg_wr
-//`endif
+input				dbg_mode,		//debug mode
+input				dbg_reg_access,		//debugger access register			
+input 				dbg_wr1_rd0,            //debugger access register cmd 0: read; 1: write
+input[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno,              //debugger access register number
+input[`DATA_WIDTH - 1 : 0]	dbg_write_data,         //debugger access register write data
+output[`DATA_WIDTH - 1 : 0]	dbg_read_data,          //debugger access register read data
+output                     	dbg_read_data_valid,    //debugger access register read data valid
+output				dbg_wr                  //debugger write csrs				
 
 
 );
@@ -69,7 +67,6 @@ output				dbg_wr
 //------------------------------------------------//
 //For Debugger access 
 //------------------------------------------------//
-//`ifdef KRV_HAS_DBG
 wire dbg_csrs_range = (dbg_regno >= 16'h0000) && (dbg_regno <= 16'h0fff);
 wire dbg_csrs_access = dbg_reg_access && dbg_csrs_range;
 assign dbg_wr = dbg_wr1_rd0  && dbg_csrs_access;
@@ -77,15 +74,6 @@ wire dbg_rd = !dbg_wr1_rd0 && dbg_csrs_access;
 wire[11:0] dbg_addr = dbg_regno[11:0];
 assign dbg_read_data_valid = dbg_rd;
 assign dbg_read_data = dbg_rd ? read_data : 32'h0;
-//`else
-/*
-wire dbg_mode = 1'b0;
-wire dbg_wr = 1'b0;
-wire dbg_rd = 1'b0;
-wire [`DATA_WIDTH - 1 : 0]	dbg_write_data = 32'h0;
-wire dbg_addr = 12'h0;
-*/
-//`endif
 
 //------------------------------------------------//
 //Register address decode

@@ -31,21 +31,21 @@ input wire cpu_clk,					//cpu clock
 input wire cpu_rstn,					//cpu reset, active low
 
 //trigger regs
-input tselect,
-input [`DATA_WIDTH - 1 : 0] tdata1,
-input [`DATA_WIDTH - 1 : 0] tdata2_t0,
-input [`DATA_WIDTH - 1 : 0] tdata2_t1,
-input [`DATA_WIDTH - 1 : 0] tdata3_t0,
-input [`DATA_WIDTH - 1 : 0] tdata3_t1,
-output[`DATA_WIDTH - 1 : 0] mctrl_rd_data, 
+output[`DATA_WIDTH - 1 : 0] mctrl_rd_data, 		//mctrl read data
+input tselect,                                          //tselect
+input [`DATA_WIDTH - 1 : 0] tdata1,			//tdata1
+input [`DATA_WIDTH - 1 : 0] tdata2_t0,                  //tdata2 for trigger0
+input [`DATA_WIDTH - 1 : 0] tdata2_t1,                  //tdata3 for trigger0
+input [`DATA_WIDTH - 1 : 0] tdata3_t0,                  //tdata2 for trigger1
+input [`DATA_WIDTH - 1 : 0] tdata3_t1,                  //tdata3 for trigger1
 //trigger sources
-input [`ADDR_WIDTH - 1 : 0] pc_ex,
-input load_ex,
-input store_ex,
-input [`ADDR_WIDTH - 1 : 0] mem_addr_ex,
+input [`ADDR_WIDTH - 1 : 0] pc_ex,			//PC at EX stage
+input load_ex,						//load at EX stage
+input store_ex,						//store at EX stage
+input [`ADDR_WIDTH - 1 : 0] mem_addr_ex,		//load/store address at EX stage
 
-input dbg_mode,
-output breakpoint		//enter debug mode
+input dbg_mode,						//debug mode
+output breakpoint					//breakpoint met
 /*
 ,
 output reg breakpoint_exp	//just a breakpoint exception

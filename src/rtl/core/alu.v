@@ -86,12 +86,12 @@ output reg [`DATA_WIDTH - 1 : 0] store_data_mem,	// store data at MEM stage
 output wire [`ADDR_WIDTH - 1 : 0] mem_addr_mem		// memory address at MEM stage
 `ifdef KRV_HAS_DBG
 ,
-input wire breakpoint,
-input wire dbg_mode,
-input wire single_step_d2,
-input wire single_step_d3,
-input wire single_step_d4,
-output wire [`ADDR_WIDTH - 1 : 0] mem_addr_ex		// memory address at MEM stage
+input wire breakpoint,					//breakpoint met
+input wire dbg_mode,					//debug mode
+input wire single_step_d2,				//single step delay 2cycles
+input wire single_step_d3,				//single step delay 3cycles	
+input wire single_step_d4,				//single step delay 4cycles
+output wire [`ADDR_WIDTH - 1 : 0] mem_addr_ex		// memory address at MEM stage for trigger match check
 `endif
 
 

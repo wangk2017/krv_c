@@ -57,8 +57,8 @@ input wire [`INSTR_WIDTH - 1 : 0] instr_read_data, 	// instruction from imem
 output reg [`ADDR_WIDTH - 1 : 0] pc,	
 input wire mret,					// mret
 `ifdef KRV_HAS_DBG
-input wire ebreak,
-input wire breakpoint,
+input wire ebreak,					// ebreak instruction
+input wire breakpoint,					// breakpoint met
 input wire dbg_mode,					// dbg_mode
 input wire dret,					// dret
 input wire single_step,					// single_step

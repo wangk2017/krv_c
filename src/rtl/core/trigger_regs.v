@@ -41,9 +41,8 @@ input wire mcsr_set,					//mcsr set
 input wire mcsr_clr,					//mcsr clear
 input wire [`DATA_WIDTH - 1 : 0] write_data,		//mcsr write data
 output wire [`DATA_WIDTH - 1 : 0] read_data,		//mcsr read data
-input [`DATA_WIDTH - 1 : 0] mctrl_rd_data,		//mctrl read data
-output reg tselect,					//tselect
-output reg [`DATA_WIDTH - 1 : 0] tdata1,		//tdata1
+output reg [`DATA_WIDTH - 1 : 0] tdata1_t0,		//tdata1 for trigger0
+output reg [`DATA_WIDTH - 1 : 0] tdata1_t1,		//tdata1 for trigger0
 output reg [`DATA_WIDTH - 1 : 0] tdata2_t0,		//tdata2 for trigger0
 output reg [`DATA_WIDTH - 1 : 0] tdata3_t0,		//tdata3 for trigger0
 output reg [`DATA_WIDTH - 1 : 0] tdata2_t1,		//tdata2 for trigger1
@@ -86,6 +85,7 @@ wire tdata1_sel 	= (csr_access_addr == `TDATA1_ADDR);
 wire tdata2_sel 	= (csr_access_addr == `TDATA2_ADDR);
 wire tdata3_sel 	= (csr_access_addr == `TDATA3_ADDR);
 
+reg tselect;					//tselect
 
 //tselect -- Trigger Select 
 //currently only two trigger is supported
@@ -131,39 +131,53 @@ always @ (posedge cpu_clk or negedge cpu_rstn)
 begin
 	if(!cpu_rstn)
 	begin
-		tdata1 <= 1'b0;
+		tdata1_t0 <= 32'h0;
+		tdata1_t1 <= 32'h0;
 	end
 	else
 	begin
 		if (dbg_wr && tdata1_sel)
 		begin
-			tdata1 = dbg_write_data;
+			if(tselect)
+			tdata1_t1 = dbg_write_data;
+			else
+			tdata1_t0 = dbg_write_data;
 		end
 		else if (tdata1_sel && valid_mcsr_wr)
 		begin
 			if(mcsr_set)
 			begin
-				tdata1 <= tdata1 | write_data;
+				if(tselect)
+				tdata1_t1 <= tdata1_t1 | write_data;
+				else
+				tdata1_t0 <= tdata1_t0 | write_data;
 			end
 			else if(mcsr_clr)
 			begin
-				tdata1 <= tdata1 & (~write_data);
+				if(tselect)
+				tdata1_t1 <= tdata1_t1 & (~write_data);
+				else
+				tdata1_t0 <= tdata1_t0 & (~write_data);
 			end
 			else
 			begin
-				tdata1 <= write_data;
+				if(tselect)
+				tdata1_t1 <= write_data;
+				else
+				tdata1_t0 <= write_data;
 			end
 		end
 	end
 end
 
-wire data1_type = tdata1[`DATA_WIDTH - 1 : `DATA_WIDTH -4];
-wire dmode = tdata1[`DATA_WIDTH - 5];
+wire dmode_t0 = tdata1_t0[`DATA_WIDTH - 5];
+wire valid_tdata_t0_wr = dmode_t0 ? (valid_mcsr_wr && dbg_mode) : valid_mcsr_wr;
 
-wire valid_tdata_wr = dmode ? (valid_mcsr_wr && dbg_mode) : valid_mcsr_wr;
+wire dmode_t1 = tdata1_t1[`DATA_WIDTH - 5];
+wire valid_tdata_t1_wr = dmode_t1 ? (valid_mcsr_wr && dbg_mode) : valid_mcsr_wr;
 
 wire [`DATA_WIDTH - 1 : 0] tdata1_rd_data;
-assign tdata1_rd_data = (tdata1_sel)? ((data1_type == 2) ? mctrl_rd_data : tdata1) : {`DATA_WIDTH{1'b0}};
+assign tdata1_rd_data = (tdata1_sel)?  (tselect ? tdata1_t1 : tdata1_t0) : {`DATA_WIDTH{1'b0}};
 
 
 
@@ -185,27 +199,27 @@ begin
 			else
 			tdata2_t0 = dbg_write_data;
 		end
-		else if (tdata2_sel & valid_tdata_wr)
+		else if (tdata2_sel)
 		begin
 			if(mcsr_set)
 			begin
-				if(tselect)
+				if(tselect && valid_tdata_t1_wr)
 				tdata2_t1 <= tdata2_t1 | write_data;
-				else
+				else if(valid_tdata_t0_wr)
 				tdata2_t0 <= tdata2_t0 | write_data;
 			end
 			else if(mcsr_clr)
 			begin
-				if(tselect)
+				if(tselect && valid_tdata_t1_wr)
 				tdata2_t1 <= tdata2_t1 & (~write_data);
-				else
+				else if(valid_tdata_t0_wr)
 				tdata2_t0 <= tdata2_t0 & (~write_data);
 			end
 			else
 			begin
-				if(tselect)
+				if(tselect && valid_tdata_t1_wr)
 				tdata2_t1 <= write_data;
-				else
+				else if(valid_tdata_t0_wr)
 				tdata2_t0 <= write_data;
 			end
 		end
@@ -238,27 +252,27 @@ begin
 			else
 			tdata3_t0 = dbg_write_data;
 		end
-		else if (tdata3_sel & valid_tdata_wr)
+		else if (tdata3_sel)
 		begin
 			if(mcsr_set)
 			begin
-				if(tselect)
+				if(tselect && valid_tdata_t1_wr)
 				tdata3_t1 <= tdata3_t1 | write_data;
-				else
+				else if(valid_tdata_t0_wr)
 				tdata3_t0 <= tdata3_t0 | write_data;
 			end
 			else if(mcsr_clr)
 			begin
-				if(tselect)
+				if(tselect && valid_tdata_t1_wr)
 				tdata3_t1 <= tdata3_t1 & (~write_data);
-				else
+				else if(valid_tdata_t0_wr)
 				tdata3_t0 <= tdata3_t0 & (~write_data);
 			end
 			else
 			begin
-				if(tselect)
+				if(tselect && valid_tdata_t1_wr)
 				tdata3_t1 <= write_data;
-				else
+				else if(valid_tdata_t0_wr)
 				tdata3_t0 <= write_data;
 			end
 		end

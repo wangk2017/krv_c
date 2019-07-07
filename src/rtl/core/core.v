@@ -667,9 +667,8 @@ trap_ctrl u_trap_ctrl (
 //-----------------------------------------------------//
 //trigger_regs
 //-----------------------------------------------------//
-wire [`DATA_WIDTH - 1 : 0] mctrl_rd_data;
-wire 			   tselect;
-wire [`DATA_WIDTH - 1 : 0] tdata1;
+wire [`DATA_WIDTH - 1 : 0] tdata1_t0;
+wire [`DATA_WIDTH - 1 : 0] tdata1_t1;
 wire [`DATA_WIDTH - 1 : 0] tdata2_t0;
 wire [`DATA_WIDTH - 1 : 0] tdata3_t0;
 wire [`DATA_WIDTH - 1 : 0] tdata2_t1;
@@ -688,13 +687,12 @@ trigger_regs u_trigger_regs(
 .mcsr_clr		(mcsr_clr),
 .write_data		(mcsr_write_data),
 .read_data		(d_regs_read_data),
-.tselect		(tselect      ),
-.tdata1			(tdata1	      ),
+.tdata1_t0		(tdata1_t0      ),
+.tdata1_t1		(tdata1_t1      ),
 .tdata2_t0		(tdata2_t0    ),
 .tdata3_t0		(tdata3_t0    ),
 .tdata2_t1		(tdata2_t1    ),
 .tdata3_t1		(tdata3_t1    ),
-.mctrl_rd_data		(mctrl_rd_data),
 .dbg_mode		(dbg_mode	),
 .dbg_reg_access		(dbg_reg_access	),
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
@@ -713,13 +711,12 @@ trigger_regs u_trigger_regs(
 hw_triggers u_hw_triggers(
 .cpu_clk		(cpu_clk),		
 .cpu_rstn		(cpu_rstn),	
-.tselect		(tselect      ),
-.tdata1			(tdata1	      ),
+.tdata1_t0		(tdata1_t0      ),
+.tdata1_t1		(tdata1_t1      ),
 .tdata2_t0		(tdata2_t0    ),
 .tdata3_t0		(tdata3_t0    ),
 .tdata2_t1		(tdata2_t1    ),
 .tdata3_t1		(tdata3_t1    ),
-.mctrl_rd_data		(mctrl_rd_data),
 .pc_ex			(pc_ex),
 .load_ex		(load_ex),
 .store_ex		(store_ex),

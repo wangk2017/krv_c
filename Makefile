@@ -73,6 +73,8 @@ veri:
 
 csr.%.sim: hex_file/csr/%.hex 
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh RISCV
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 
@@ -80,6 +82,8 @@ all_csr_tests: csr.csrrc.sim csr.csrrs.sim csr.csrrw.sim csr.csrrci.sim csr.csrr
 
 pg.%.sim: hex_file/pg/%.hex 
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh PG_TEST
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 
@@ -87,6 +91,8 @@ all_pg_tests: pg.simple.sim
 
 int.%.sim: hex_file/int/%.hex 
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh RISCV
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 
@@ -94,47 +100,78 @@ all_int_tests: int.simple.sim
 
 testn.sim: hex_file/zephyr/testn.hex
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh TESTN
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 	
 
 zephyr.sim: hex_file/zephyr/zephyr.hex
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh ZEPHYR
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 	
 zephyr_phil.sim: hex_file/zephyr/zephyr_phil.hex
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh ZEPHYR_PHIL
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 	
 zephyr_sync.sim: hex_file/zephyr/zephyr_sync.hex
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh ZEPHYR_SYNC
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 	
 dhrystone.sim: hex_file/dhrystone.hex
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh DHRYSTONE
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 	
 rv32m.%.sim: hex_file/rv32m/%.hex
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh RISCV
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 
 all_rv32m_test: rv32m.mul.sim rv32m.mulh.sim rv32m.mulhu.sim rv32m.mulhsu.sim rv32m.div.sim rv32m.rem.sim rv32m.divu.sim rv32m.remu.sim 
 riscv.%.sim: hex_file/riscv/%.hex 
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh RISCV
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
 
 all_riscv_tests: riscv.add.sim riscv.bne.sim riscv.or.sim riscv.sltu.sim riscv.addi.sim riscv.fence_i.sim riscv.ori.sim riscv.sra.sim riscv.and.sim riscv.jal.sim riscv.sb.sim riscv.srai.sim riscv.andi.sim riscv.jalr.sim riscv.sh.sim riscv.srl.sim riscv.auipc.sim  riscv.lb.sim riscv.simple.sim  riscv.srli.sim riscv.beq.sim riscv.lbu.sim riscv.sll.sim riscv.sub.sim riscv.bge.sim riscv.lh.sim riscv.slli.sim riscv.sw.sim riscv.bgeu.sim riscv.lhu.sim riscv.slt.sim riscv.xor.sim riscv.blt.sim riscv.lui.sim riscv.slti.sim riscv.xori.sim riscv.bltu.sim riscv.lw.sim riscv.sltiu.sim
 
-dbg.%.sim: hex_file/dbg/%.hex
+dbg_reg.sim: hex_file/dbg/breakpoint.hex
 	cp $< hex_file/run.hex
+	./tb/sim_define.sh DBG_REF
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
+
+breakpoint.sim: hex_file/dbg/breakpoint.hex
+	cp $< hex_file/run.hex
+	./tb/sim_define.sh BREAKPOINT
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
+	vvp -l out/$@ -v -n ./out/krv -lxt2
+	cp out/krv.vcd out/krv.lxt
+
+ebreak.sim: hex_file/dbg/ebreak.hex
+	cp $< hex_file/run.hex
+	./tb/sim_define.sh EBREAK
+	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
+	vvp -l out/$@ -v -n ./out/krv -lxt2
+	cp out/krv.vcd out/krv.lxt
+
 
 update_fpga:
 	cp src/Actel_DirectCore/*.v ./fpga/hdl/
@@ -154,5 +191,6 @@ clean:
 	rm -vrf ./out/*.sim
 	rm -vrf ./out/krv*
 	rm -vrf ./out/uart*
+	rm -vrf ./tb/tb_defines.vh
 
 .PHONY: all

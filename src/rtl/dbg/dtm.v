@@ -239,7 +239,7 @@ localparam VERSION	= 4'h0;
 localparam PARTNUM	= 16'h0000;
 localparam MANUFID	= 11'h000;
 
-assign idcode = {{`DBUS_M_WIDTH_MINUS_32{1'b0}}, VERSION, PARTNUM, MANUFID,1'b1};
+assign idcode_read_data = {{`DBUS_M_WIDTH_MINUS_32{1'b0}}, VERSION, PARTNUM, MANUFID,1'b1};
 
 
 

@@ -151,7 +151,7 @@ riscv.%.sim: hex_file/riscv/%.hex
 
 all_riscv_tests: riscv.add.sim riscv.bne.sim riscv.or.sim riscv.sltu.sim riscv.addi.sim riscv.fence_i.sim riscv.ori.sim riscv.sra.sim riscv.and.sim riscv.jal.sim riscv.sb.sim riscv.srai.sim riscv.andi.sim riscv.jalr.sim riscv.sh.sim riscv.srl.sim riscv.auipc.sim  riscv.lb.sim riscv.simple.sim  riscv.srli.sim riscv.beq.sim riscv.lbu.sim riscv.sll.sim riscv.sub.sim riscv.bge.sim riscv.lh.sim riscv.slli.sim riscv.sw.sim riscv.bgeu.sim riscv.lhu.sim riscv.slt.sim riscv.xor.sim riscv.blt.sim riscv.lui.sim riscv.slti.sim riscv.xori.sim riscv.bltu.sim riscv.lw.sim riscv.sltiu.sim
 
-dbg_reg.sim: hex_file/dbg/breakpoint.hex
+dbg_ref.sim: hex_file/dbg/breakpoint.hex
 	cp $< hex_file/run.hex
 	./tb/sim_define.sh DBG_REF
 	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
@@ -171,12 +171,6 @@ ebreak.sim: hex_file/dbg/ebreak.hex
 	iverilog -g2009 -I ./tb -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 	vvp -l out/$@ -v -n ./out/krv -lxt2
 	cp out/krv.vcd out/krv.lxt
-
-
-update_fpga:
-	cp src/Actel_DirectCore/*.v ./fpga/hdl/
-	cp src/rtl/*/*.* ./fpga/hdl/
-	cp src/fpga_inc/*.* ./fpga/hdl/
 
 check_fail:
 	grep "Fail" out/*.sim

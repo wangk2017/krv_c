@@ -67,6 +67,10 @@ wire [31:0] dec_pc = DUT.u_core.u_fetch.pc_dec;
 `include "single_step_debug.v"
 `endif
 
+`ifdef SW_HW
+`include "sw_helloworld_debug.v"
+`endif
+
 wire test_end;
 `ifdef RISCV
 assign test_end = (dec_pc == 32'h48);

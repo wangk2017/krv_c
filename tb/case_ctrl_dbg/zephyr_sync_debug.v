@@ -8,7 +8,7 @@ begin
 #5;
 $display ("=========================================================================== \n");
 $display ("Here is a trick to force the baud rate higher to make the simulation faster \n");
-$display ("you can turn off the trick in tb/zephyr_phil_debug.v by comment the force \n");
+$display ("you can turn off the trick in tb/zephyr_sync_debug.v by comment the force \n");
 $display ("=========================================================================== \n");
 force DUT.m_apb.uart_0.uart_0.baud_val = 13'h4;
 end
@@ -16,25 +16,25 @@ end
 
 
 wire test_end1;
-assign test_end1 = dec_pc == 32'h00001ae4;
+assign test_end1 = dec_pc == 32'h0000df8;
 
 integer fp_z;
 
 initial
 begin
 	$display ("=============================================\n");
-	$display ("running Zephyr OS application philosopher\n");
+	$display ("running Zephyr OS application synchronization\n");
 	$display ("=============================================\n");
 
-	fp_z =$fopen ("./out/uart_tx_data_phil.txt","w");
+	fp_z =$fopen ("./out/uart_tx_data_sync.txt","w");
 @(posedge test_end1)
-begin
 @(posedge DUT.cpu_clk);
+begin
 	$fclose(fp_z);
 	$display ("=============================================\n");
 	$display ("TEST_END\n");
 	$display ("The application Print data is stored in \n");
-	$display ("out/uart_tx_data_phil.txt\n");
+	$display ("out/uart_tx_data_sync.txt\n");
 	$display ("=============================================\n");
 	$stop;
 end
@@ -46,16 +46,17 @@ begin
 		begin
 			$fwrite(fp_z, "%s", uart_tx_data);
 			$display ("UART Transmitt DATA is %s ",uart_tx_data);
-			$display ("@time %t  !",$time);
 			$display ("\n");
 		end
 
 end
-parameter MAIN 			= 32'h00000604;
+parameter MAIN 			= 32'h000014d0;
 parameter SWAP			= 32'h00000228;
-parameter BG_THREAD_MAIN	= 32'h000021c0;
-parameter PHIL			= 32'h000003c8;
-
+parameter BG_THREAD_MAIN	= 32'h000014d4;
+parameter THREADA		= 32'h0000046c;
+parameter THREADB		= 32'h00000448;
+parameter HL			= 32'h000003c8;
+parameter RESCHEDULE		= 32'h0000013c;
 
 //application process trace during simulation
 always @(posedge DUT.cpu_clk)
@@ -73,43 +74,36 @@ begin
 			$display ("@time %t  !",$time);
 			$display ("\n");
 		end
+		RESCHEDULE:
+		begin
+			$display ("reschedule Start");
+			$display ("@time %t  !",$time);
+			$display ("\n");
+		end
 		BG_THREAD_MAIN: //<bg_thread_main>
 		begin
 			$display ("bg_thread_main Start");
 			$display ("@time %t  !",$time);
 			$display ("\n");
 		end
-		PHIL:
+		THREADA: //<threadA>
 		begin
-			$display ("phil Start");
+			$display ("thread_a Start");
 			$display ("@time %t  !",$time);
 			$display ("\n");
 		end
-
+		THREADB: //<threadB>
+		begin
+			$display ("thread_b Start");
+			$display ("@time %t  !",$time);
+			$display ("\n");
+		end
+		HL: //<threadB>
+		begin
+			$display ("helloLoop Start");
+			$display ("@time %t  !",$time);
+			$display ("\n");
+		end
 	endcase
 end
-
-wire [31:0] mem_addr = DUT.u_core.u_dmem_ctrl.mem_addr_mem;
-wire [31:0] mem_wr_data = DUT.u_core.u_dmem_ctrl.store_data_mem;
-wire mem_wr = DUT.u_core.u_dmem_ctrl.store_mem;
-always @(posedge DUT.cpu_clk)
-begin
-	if(mem_wr && (mem_addr == 32'h412fc))
-		begin
-			$display ("write 412fc");
-			$display ("@time %t  !",$time);
-			$display ("\n");
-		end
-end
-
-always @(posedge DUT.cpu_clk)
-begin
-	if(mem_wr && (mem_addr == 32'h4131c))
-		begin
-			$display ("write 4131c");
-			$display ("@time %t  !",$time);
-			$display ("\n");
-		end
-end
-
 

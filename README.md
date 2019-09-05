@@ -1,12 +1,15 @@
 # krv_c
 A configurable microprocessor based on RISCV
 
+
 Introduction
+
 
 krv-c is a configurable RISCV-based 32-bit micro-controller subsystem. Based on krv_m0 (https://github.com/wangk2017/krv_m0), krv-c has featuers as below:
 
 
 Features
+
 
 •RV32IM standard ISA support
 
@@ -24,11 +27,16 @@ Features
 
 
 
+Configre
+
+
 Configure file is located here: 
 
 src/rtl/inc/user_config.vh
 
+
 Tool Setup
+
 
 krv_c uses the free iverilog for functional verification and gtkwave for debug. Below is how these tools are installed for ubuntu
 
@@ -36,7 +44,9 @@ $:sudo apt-get install iverilog
 
 $:sudo apt-get install gtkwave
 
+
 Simulation Run
+
 
 (1) RV32I Compliance verification
 
@@ -70,7 +80,9 @@ run synchronization application
 
 make zephyr_sync.sim
 
+
 Software Development
+
 
 krv-c could support zephyr OS, and application could be developped in zephyr OS env.
 

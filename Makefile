@@ -5,14 +5,11 @@ software_dir := ./software
 default: all
 
 
-zephyr/%.hex: $(zephyr_dir)/samples/%/build/zephyr/zephyr.elf firmware/makehex.py
+zephyr/%.hex: $(zephyr_dir)/samples/%/build/zephyr/zephyr.bin firmware/makehex.py
 	python firmware/makehex.py $< > hex_file/$@
-	sed -i "1,37d" hex_file/$@
 
-sw/%.hex: $(software_dir)/%/build/software.elf firmware/makehex.py
+sw/%.hex: $(software_dir)/%/build/software.bin firmware/makehex.py
 	python firmware/makehex.py $< > hex_file/$@
-	sed -i "1,1024d" hex_file/$@
-	sed -i "434,1024d" hex_file/$@
 
 pg/%.hex: tests/extra_tests/pg_ctrl/pg_ctrl-m-% firmware/makehex.py
 	python firmware/makehex.py $< > hex_file/$@

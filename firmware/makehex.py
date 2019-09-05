@@ -29,15 +29,11 @@ binfile = argv[1]
 with open(binfile, "rb") as f:
 
     bindata = f.read()
-    nwords = len(bindata);
 
 
 
 bindata = bytearray(bindata);
-
-
-#assert len(bindata) % 4 == 0
-
+nwords = len(bindata);
 
 
 for i in range(nwords):

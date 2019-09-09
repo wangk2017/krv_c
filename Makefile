@@ -44,8 +44,6 @@ all_int_hex: int/simple.hex
 all_csr_hex: csr/csrrc.hex csr/csrrs.hex csr/csrrw.hex csr/csrrci.hex csr/csrrsi.hex csr/csrrwi.hex
 all_zephyr_hex: zephyr/hello_world.hex zephyr/philosophers.hex zephyr/synchronization.hex
 
-comp:
-	iverilog -g2009 -I ./tb -I ./tb/case_ctrl_dbg -I ./src/rtl/inc -o ./out/krv ./tb/krv_c_tb.v ./tb/rom.v ./src/rtl/*/*.v
 
 veri:
 	verilator -Wall +incdir+./tb +incdir+./tb/sim_inc --cc ./tb/rom.v ./verification/krv_c_tb.v ./src/rtl/*/*.v  ./src/Actel_DirectCore/*.v --exe ./verification/sim_main.cpp

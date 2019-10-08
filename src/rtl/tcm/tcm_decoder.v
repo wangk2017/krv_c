@@ -62,7 +62,7 @@ wire valid_reg_access;
 
 wire HREADY_tcm;
 
-ahb2regbus #(.RD_DELAY_1_CYCLE(1),.IP_REG_END_OFFSET(12'hFFF))  u_ahb2regbus(
+ahb2regbus #(.IP_REG_END_OFFSET(12'hFFF))  u_ahb2regbus(
 	//AHB IF
 	.HCLK			(HCLK),
 	.HRESETn		(HRESETn),

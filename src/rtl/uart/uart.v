@@ -69,7 +69,9 @@ uart_regs u_uart_regs (
 .PREADY				(PREADY		),
 .PSLVERR			(PSLVERR	),
 .tx_data_reg_wr			(tx_data_reg_wr		),
+.rx_data_reg_rd			(rx_data_reg_rd		),
 .tx_data			(tx_data		),
+.rx_data_read_valid		(rx_data_read_valid	),
 .rx_data			(rx_data		),
 .baud_val			(baud_val		),
 .data_bits			(data_bits		),
@@ -107,6 +109,20 @@ uart_tx u_uart_tx (
 
 //UART receive control block
 uart_rx u_uart_rx (
+.PCLK			(PCLK),
+.PRESETN		(PRESETN),
+.UART_RX		(UART_RX),
+.rx_sample_pulse	(rx_sample_pulse	),
+.data_bits		(data_bits		),
+.parity_en		(parity_en		),
+.parity_odd0_even1	(parity_odd0_even1	),
+.rx_data_reg_rd		(rx_data_reg_rd		),
+.rx_data		(rx_data		),
+.rx_data_read_valid	(rx_data_read_valid	),
+.rx_ready		(rx_ready		),
+.parity_err		(parity_err		),
+.overflow		(overflow		)
 );
+
 
 endmodule

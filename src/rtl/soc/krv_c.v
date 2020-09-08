@@ -12,19 +12,17 @@
  limitations under the License.      
 */
 
-//==============================================================||
+//==========================================||
 // File Name: 		krv_c.v					||
 // Author:    		Kitty Wang				||
-// Description: 						||
-//	      		top of krv-m			     	|| 
-// History:   							||
-//===============================================================
+// Description: 	top of krv-c		   	|| 
+//==========================================||
 
 `include "top_defines.vh"
 module krv_c (
 //global interface
 input clk_in,		//clock in
-input porn,		//power on reset, active low
+input porn,			//power on reset, active low
 
 //GPIO 
 input [7:0] GPIO_IN,
@@ -46,142 +44,153 @@ input				TRST
 );
 
 //Wires
-//PLL
-wire cpu_clk;
-wire cpu_rstn;
-wire HCLK;
-wire HRESETn;
-wire kplic_clk;
-wire kplic_rstn;
 
-wire dma_dtcm_access = 1'b0;			
-wire dma_dtcm_ready;
-wire dma_dtcm_rd0_wr1 = 1'b0;
-wire [`ADDR_WIDTH - 1 : 0] dma_dtcm_addr = 32'h0;
-wire [`DATA_WIDTH - 1 : 0] dma_dtcm_wdata = 32'h0;
-wire [`DATA_WIDTH - 1 : 0] dma_dtcm_rdata;
-wire dma_dtcm_rdata_valid;	
+//clock and reset
+wire 					cpu_clk;
+wire 					cpu_clk_g;
+wire 					cpu_rstn;
+wire 					HCLK;
+wire 					HRESETn;
+wire 					kplic_clk;
+wire 					kplic_rstn;
 
-	wire cpu_clk_g;
-	wire kplic_int;
-	wire core_timer_int;
-	wire DAHB_HGRANT;
-	wire DAHB_HREADY;
-	wire [1:0] DAHB_HRESP;
-	wire [`AHB_DATA_WIDTH - 1 : 0] DAHB_HRDATA;
-	wire DAHB_HBUSREQ;
-	wire DAHB_HLOCK;
-	wire [1:0] DAHB_HTRANS;
-	wire [`AHB_ADDR_WIDTH - 1 : 0] DAHB_HADDR;
-	wire DAHB_HWRITE;
-	wire [2:0] DAHB_HSIZE;
-	wire [2:0] DAHB_HBURST;
-	wire [3:0] DAHB_HPROT;
-	wire [`AHB_DATA_WIDTH - 1 : 0] DAHB_HWDATA;
-	wire DAHB_access;	
-	wire DAHB_rd0_wr1;		
-	wire [2:0] DAHB_size;
-	wire [`DATA_WIDTH - 1 : 0] DAHB_write_data;
-	wire [`ADDR_WIDTH - 1 : 0] DAHB_addr;
-	wire DAHB_trans_buffer_full;
-	wire [`DATA_WIDTH - 1 : 0] DAHB_read_data;
-	wire DAHB_read_data_valid;
+//dma access dtcm signals
+//Currently we don't have a dma in our soc, so tie the signals to inactive
+wire 						dma_dtcm_access = 1'b0;			
+wire 						dma_dtcm_ready;
+wire 						dma_dtcm_rd0_wr1 = 1'b0;
+wire [`ADDR_WIDTH - 1 : 0] 	dma_dtcm_addr = 32'h0;
+wire [`DATA_WIDTH - 1 : 0] 	dma_dtcm_wdata = 32'h0;
+wire [`DATA_WIDTH - 1 : 0] 	dma_dtcm_rdata;
+wire 						dma_dtcm_rdata_valid;	
 
-	wire instr_itcm_access;
-	wire [`ADDR_WIDTH - 1 : 0] instr_itcm_addr;
-	wire [`DATA_WIDTH - 1 : 0] instr_itcm_read_data;
-	wire instr_itcm_read_data_valid;
+//DAHB signals
+	wire 							DAHB_HGRANT;
+	wire 							DAHB_HREADY;
+	wire [1:0] 						DAHB_HRESP;
+	wire [`AHB_DATA_WIDTH - 1 : 0] 	DAHB_HRDATA;
+	wire 							DAHB_HBUSREQ;
+	wire 							DAHB_HLOCK;
+	wire [1:0] 						DAHB_HTRANS;
+	wire [`AHB_ADDR_WIDTH - 1 : 0] 	DAHB_HADDR;
+	wire 							DAHB_HWRITE;
+	wire [2:0] 						DAHB_HSIZE;
+	wire [2:0] 						DAHB_HBURST;
+	wire [3:0] 						DAHB_HPROT;
+	wire [`AHB_DATA_WIDTH - 1 : 0] 	DAHB_HWDATA;
+	wire 							DAHB_access;	
+	wire 							DAHB_rd0_wr1;		
+	wire [2:0] 						DAHB_size;
+	wire [`DATA_WIDTH - 1 : 0] 		DAHB_write_data;
+	wire [`ADDR_WIDTH - 1 : 0] 		DAHB_addr;
+	wire 							DAHB_trans_buffer_full;
+	wire [`DATA_WIDTH - 1 : 0] 		DAHB_read_data;
+	wire 							DAHB_read_data_valid;
 
-/*
-	wire instr_dtcm_access;
-	wire [`ADDR_WIDTH - 1 : 0] instr_dtcm_addr;
-	wire [`DATA_WIDTH - 1 : 0] instr_dtcm_read_data;
-	wire instr_dtcm_read_data_valid;
-*/
+//tcm access signals
+	wire 							instr_itcm_access;
+	wire [`ADDR_WIDTH - 1 : 0] 		instr_itcm_addr;
+	wire [`DATA_WIDTH - 1 : 0] 		instr_itcm_read_data;
+	wire 							instr_itcm_read_data_valid;
 
-	wire IAHB_ready;
-	wire itcm_auto_load;
-	wire [`ADDR_WIDTH - 1 : 0 ] itcm_auto_load_addr;
+	wire 							IAHB_ready;
+	wire 							itcm_auto_load;
+	wire [`ADDR_WIDTH - 1 : 0 ] 	itcm_auto_load_addr;
 
-	wire data_itcm_access;
-	wire data_itcm_ready;
-	wire data_itcm_rd0_wr1;	
-	wire [3:0] data_itcm_byte_strobe;
-	wire [`DATA_WIDTH - 1 : 0] data_itcm_write_data;
-	wire [`ADDR_WIDTH - 1 : 0] data_itcm_addr;
-	wire [`DATA_WIDTH - 1 : 0] data_itcm_read_data;
-	wire data_itcm_read_data_valid;
+	wire 							data_itcm_access;
+	wire 							data_itcm_ready;
+	wire 							data_itcm_rd0_wr1;	
+	wire [3:0] 						data_itcm_byte_strobe;
+	wire [`DATA_WIDTH - 1 : 0] 		data_itcm_write_data;
+	wire [`ADDR_WIDTH - 1 : 0] 		data_itcm_addr;
+	wire [`DATA_WIDTH - 1 : 0] 		data_itcm_read_data;
+	wire 							data_itcm_read_data_valid;
 	  
-	wire data_dtcm_access;
-	wire data_dtcm_ready;
-	wire data_dtcm_rd0_wr1;	
-	wire [3:0] data_dtcm_byte_strobe;
-	wire [`DATA_WIDTH - 1 : 0]  data_dtcm_write_data;
-	wire [`ADDR_WIDTH - 1 : 0] data_dtcm_addr;
-	wire [`DATA_WIDTH - 1 : 0] data_dtcm_read_data;
-	wire data_dtcm_read_data_valid;
+	wire 							data_dtcm_access;
+	wire 							data_dtcm_ready;
+	wire 							data_dtcm_rd0_wr1;	
+	wire [3:0] 						data_dtcm_byte_strobe;
+	wire [`DATA_WIDTH - 1 : 0]  	data_dtcm_write_data;
+	wire [`ADDR_WIDTH - 1 : 0] 		data_dtcm_addr;
+	wire [`DATA_WIDTH - 1 : 0] 		data_dtcm_read_data;
+	wire 							data_dtcm_read_data_valid;
+	wire 							AHB_itcm_access;
+	wire 							AHB_dtcm_access;
+	wire [`AHB_ADDR_WIDTH - 1 : 0] 	AHB_tcm_addr;
+	wire 							AHB_tcm_rd0_wr1;
+	wire [3:0] 						AHB_tcm_byte_strobe;
+	wire [`DATA_WIDTH - 1 : 0] 		AHB_tcm_write_data;
+	wire [`DATA_WIDTH - 1 : 0] 		AHB_itcm_read_data;
+	wire [`DATA_WIDTH - 1 : 0] 		AHB_dtcm_read_data;
+	wire  							AHB_dtcm_read_data_valid;
+	wire  							AHB_itcm_read_data_valid;
 	  
-	wire IAHB_HGRANT;
-	wire IAHB_HBUSREQ;
-	wire IAHB_HLOCK;
-	wire IAHB_HREADY;
-	wire [1:0] IAHB_HRESP;
-	wire [`AHB_DATA_WIDTH - 1 : 0] IAHB_HRDATA;
-	wire [1:0] IAHB_HTRANS;
-	wire [`AHB_ADDR_WIDTH - 1 : 0] IAHB_HADDR;
-	wire IAHB_HWRITE;
-	wire IAHB_access;	
-	wire [`ADDR_WIDTH - 1 : 0] IAHB_addr;
-	wire [`DATA_WIDTH - 1 : 0] IAHB_read_data;
-	wire IAHB_read_data_valid;
+//IAHB signals
+	wire 							IAHB_HGRANT;
+	wire 							IAHB_HBUSREQ;
+	wire 							IAHB_HLOCK;
+	wire 							IAHB_HREADY;
+	wire [1:0] 						IAHB_HRESP;
+	wire [`AHB_DATA_WIDTH - 1 : 0] 	IAHB_HRDATA;
+	wire [1:0] 						IAHB_HTRANS;
+	wire [`AHB_ADDR_WIDTH - 1 : 0] 	IAHB_HADDR;
+	wire 							IAHB_HWRITE;
+	wire 							IAHB_access;	
+	wire [`ADDR_WIDTH - 1 : 0] 		IAHB_addr;
+	wire [`DATA_WIDTH - 1 : 0] 		IAHB_read_data;
+	wire 							IAHB_read_data_valid;
 
-	 wire HSEL_kplic;
+//kplic AHB signals
+	 wire 							HSEL_kplic;
 	 wire [`AHB_ADDR_WIDTH - 1 : 0] HADDR_kplic;
-	 wire HWRITE_kplic;
-	 wire [1:0] HTRANS_kplic;
-	 wire [2:0] HBURST_kplic;
+	 wire 							HWRITE_kplic;
+	 wire [1:0] 					HTRANS_kplic;
+	 wire [2:0] 					HBURST_kplic;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HWDATA_kplic;
-	 wire HREADY_kplic;
-	 wire [1:0] HRESP_kplic;
+	 wire 							HREADY_kplic;
+	 wire [1:0] 					HRESP_kplic;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA_kplic;
 
-	 wire HSEL_core_timer;
+//core timer AHB signals
+	 wire 							HSEL_core_timer;
 	 wire [`AHB_ADDR_WIDTH - 1 : 0] HADDR_core_timer;
-	 wire HWRITE_core_timer;
-	 wire [1:0] HTRANS_core_timer;
-	 wire [2:0] HBURST_core_timer;
+	 wire 							HWRITE_core_timer;
+	 wire [1:0] 					HTRANS_core_timer;
+	 wire [2:0] 					HBURST_core_timer;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HWDATA_core_timer;
-	 wire HREADY_core_timer;
-	 wire [1:0] HRESP_core_timer;
+	 wire 							HREADY_core_timer;
+	 wire [1:0] 					HRESP_core_timer;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA_core_timer;
 
-
-	 wire HSEL_apb;
+//apb signals
+	 wire 							HSEL_apb;
 	 wire [`AHB_ADDR_WIDTH - 1 : 0] HADDR_apb;
-	 wire HWRITE_apb;
-	 wire [1:0] HTRANS_apb;
-	 wire [2:0] HBURST_apb;
+	 wire 							HWRITE_apb;
+	 wire [1:0] 					HTRANS_apb;
+	 wire [2:0] 					HBURST_apb;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HWDATA_apb;
-	 wire HREADY_apb;
-	 wire [1:0] HRESP_apb;
+	 wire 							HREADY_apb;
+	 wire [1:0] 					HRESP_apb;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA_apb;
 
 
-	 wire HSEL_S0;
-	 wire HSEL_flash;
+//flash signals
+	 wire 							HSEL_S0;
+	 wire 							HSEL_flash;
 	 wire [`AHB_ADDR_WIDTH - 1 : 0] HADDR_flash;
-	 wire [2 : 0] HSIZE_flash;
-	 wire HWRITE_flash;
-	 wire [1:0] HTRANS_flash;
-	 wire [2:0] HBURST_flash;
+	 wire [2:0] 					HSIZE_flash;
+	 wire 							HWRITE_flash;
+	 wire [1:0] 					HTRANS_flash;
+	 wire [2:0] 					HBURST_flash;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HWDATA_flash;
-	 wire HREADY_S0;
-	 wire HREADY_flash;
-	 wire [1:0] HRESP_flash;
+	 wire 							HREADY_S0;
+	 wire 							HREADY_flash;
+	 wire [1:0] 					HRESP_flash;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA_flash;
 	 wire [`AHB_DATA_WIDTH - 1 : 0] HRDATA_S0;
 
 
+//power-saving signals
 	wire wfi;
 	wire mother_sleep;
 	wire daughter_sleep;
@@ -190,32 +199,36 @@ wire dma_dtcm_rdata_valid;
 	wire save;
 	wire restore;
 
+//interrupt signals
+	wire kplic_int;
+	wire core_timer_int;
 	wire timer_int;
 
 	wire  [`INT_NUM - 1 : 0] external_int = {31'h0, timer_int};
 
 `ifdef KRV_HAS_DBG
-wire 				resumereq_w1;
-wire				dbg_reg_access;
-wire 				dbg_wr1_rd0;
-wire[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno;
-wire [`DATA_WIDTH - 1 : 0]	dbg_write_data;
-wire                     	dbg_read_data_valid;
-wire[`DATA_WIDTH - 1 : 0]	dbg_read_data;
-	wire sb_HGRANT;
-	wire sb_HREADY;
-	wire [1:0] sb_HRESP;
-	wire [`AHB_DATA_WIDTH - 1 : 0] sb_HRDATA;
-	wire sb_HBUSREQ;
-	wire sb_HLOCK;
-	wire [1:0] sb_HTRANS;
-	wire [`AHB_ADDR_WIDTH - 1 : 0] sb_HADDR;
-	wire sb_HWRITE;
-	wire [2:0] sb_HSIZE;
-	wire [2:0] sb_HBURST;
-	wire [3:0] sb_HPROT;
-	wire [`AHB_DATA_WIDTH - 1 : 0] sb_HWDATA;
-
+	//debug related signals
+	wire 							resumereq_w1;
+	wire							dbg_reg_access;
+	wire 							dbg_wr1_rd0;
+	wire[`CMD_REGNO_SIZE - 1 : 0]	dbg_regno;
+	wire [`DATA_WIDTH - 1 : 0]		dbg_write_data;
+	wire                     		dbg_read_data_valid;
+	wire[`DATA_WIDTH - 1 : 0]		dbg_read_data;
+	//system bus related signals
+	wire 							sb_HGRANT;
+	wire 							sb_HREADY;
+	wire [1:0] 						sb_HRESP;
+	wire [`AHB_DATA_WIDTH - 1 : 0] 	sb_HRDATA;
+	wire 							sb_HBUSREQ;
+	wire 							sb_HLOCK;
+	wire [1:0] 						sb_HTRANS;
+	wire [`AHB_ADDR_WIDTH - 1 : 0] 	sb_HADDR;
+	wire 							sb_HWRITE;
+	wire [2:0] 						sb_HSIZE;
+	wire [2:0] 						sb_HBURST;
+	wire [3:0] 						sb_HPROT;
+	wire [`AHB_DATA_WIDTH - 1 : 0] 	sb_HWDATA;
 `endif
 	
 //-----------------------------------------------------//
@@ -290,80 +303,53 @@ core u_core (
 	.pg_resetn				(pg_resetn),
 	.boot_addr				(`BOOT_ADDR),
 	.kplic_int				(kplic_int),	
-	.core_timer_int				(core_timer_int),	
+	.core_timer_int			(core_timer_int),	
 	.wfi					(wfi),
 
 	.instr_itcm_addr			(instr_itcm_addr),
 	.instr_itcm_access			(instr_itcm_access),
-	.instr_itcm_read_data			(instr_itcm_read_data),
-	.instr_itcm_read_data_valid		(instr_itcm_read_data_valid),
+	.instr_itcm_read_data		(instr_itcm_read_data),
+	.instr_itcm_read_data_valid	(instr_itcm_read_data_valid),
 	.itcm_auto_load				(itcm_auto_load),
-/*
-	.data_itcm_rd0_wr1			(data_itcm_rd0_wr1),
-	.data_itcm_byte_strobe			(data_itcm_byte_strobe),
-	.data_itcm_access			(data_itcm_access),
-	.data_itcm_ready			(data_itcm_ready),
-	.data_itcm_addr				(data_itcm_addr),
-	.data_itcm_write_data			(data_itcm_write_data),
-	.data_itcm_read_data			(data_itcm_read_data),
-	.data_itcm_read_data_valid		(data_itcm_read_data_valid),
-*/
-/*
-	.instr_dtcm_addr			(instr_dtcm_addr),
-	.instr_dtcm_access			(instr_dtcm_access),
-	.instr_dtcm_read_data			(instr_dtcm_read_data),
-	.instr_dtcm_read_data_valid		(instr_dtcm_read_data_valid),
-*/
 
 	.data_dtcm_rd0_wr1			(data_dtcm_rd0_wr1),
-	.data_dtcm_byte_strobe			(data_dtcm_byte_strobe),
+	.data_dtcm_byte_strobe		(data_dtcm_byte_strobe),
 	.data_dtcm_access			(data_dtcm_access),
 	.data_dtcm_ready			(data_dtcm_ready),
 	.data_dtcm_addr				(data_dtcm_addr),
-	.data_dtcm_write_data			(data_dtcm_write_data),
-	.data_dtcm_read_data			(data_dtcm_read_data),
-	.data_dtcm_read_data_valid		(data_dtcm_read_data_valid),
+	.data_dtcm_write_data		(data_dtcm_write_data),
+	.data_dtcm_read_data		(data_dtcm_read_data),
+	.data_dtcm_read_data_valid	(data_dtcm_read_data_valid),
 
 	.IAHB_access				(IAHB_access),	
-	.IAHB_addr				(IAHB_addr),
+	.IAHB_addr					(IAHB_addr),
 	.IAHB_read_data				(IAHB_read_data),
-	.IAHB_read_data_valid			(IAHB_read_data_valid),
+	.IAHB_read_data_valid		(IAHB_read_data_valid),
 
 	.DAHB_access				(DAHB_access),	
 	.DAHB_rd0_wr1				(DAHB_rd0_wr1),
-	.DAHB_size				(DAHB_size),
+	.DAHB_size					(DAHB_size),
 	.DAHB_write_data			(DAHB_write_data),
-	.DAHB_addr				(DAHB_addr),
-	.DAHB_trans_buffer_full			(DAHB_trans_buffer_full),
+	.DAHB_addr					(DAHB_addr),
+	.DAHB_trans_buffer_full		(DAHB_trans_buffer_full),
 	.DAHB_read_data				(DAHB_read_data),
-	.DAHB_read_data_valid			(DAHB_read_data_valid)
+	.DAHB_read_data_valid		(DAHB_read_data_valid)
 `ifdef KRV_HAS_DBG
 //debug interface
 ,
 .resumereq_w1		(resumereq_w1	),
 .dbg_reg_access		(dbg_reg_access	),
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
-.dbg_regno		(dbg_regno	),
+.dbg_regno			(dbg_regno	),
 .dbg_write_data		(dbg_write_data	),
-.dbg_read_data_valid	(dbg_read_data_valid),
+.dbg_read_data_valid(dbg_read_data_valid),
 .dbg_read_data		(dbg_read_data	)
 `endif
-
 );
 
 //-----------------------------------------------------//
 //itcm
 //-----------------------------------------------------//
-wire AHB_itcm_access;
-wire AHB_dtcm_access;
-wire [`AHB_ADDR_WIDTH - 1 : 0] AHB_tcm_addr;
-wire AHB_tcm_rd0_wr1;
-wire [3:0] AHB_tcm_byte_strobe;
-wire [`DATA_WIDTH - 1 : 0] AHB_tcm_write_data;
-wire [`DATA_WIDTH - 1 : 0] AHB_itcm_read_data;
-wire [`DATA_WIDTH - 1 : 0] AHB_dtcm_read_data;
-wire  AHB_dtcm_read_data_valid;
-wire  AHB_itcm_read_data_valid;
 
 tcm_decoder u_tcm_decoder (
 	.HCLK		(HCLK),
@@ -376,56 +362,44 @@ tcm_decoder u_tcm_decoder (
 	.HWDATA		(HWDATA_flash),
 	.HREADY		(HREADY_S0),
 	.HRDATA		(HRDATA_S0),
-	.HREADY_flash	(HREADY_flash),
-	.HRDATA_flash	(HRDATA_flash),
-	.HSEL_flash	(HSEL_flash),
-	.itcm_auto_load	(itcm_auto_load),
-	.AHB_itcm_access		(AHB_itcm_access   ),
-	.AHB_dtcm_access		(AHB_dtcm_access   ),
-	.AHB_tcm_addr			(AHB_tcm_addr	   ),
+	.HREADY_flash				(HREADY_flash),
+	.HRDATA_flash				(HRDATA_flash),
+	.HSEL_flash					(HSEL_flash),
+	.itcm_auto_load				(itcm_auto_load),
+	.AHB_itcm_access			(AHB_itcm_access   ),
+	.AHB_dtcm_access			(AHB_dtcm_access   ),
+	.AHB_tcm_addr				(AHB_tcm_addr	   ),
 	.AHB_tcm_byte_strobe		(AHB_tcm_byte_strobe	   ),
-	.AHB_tcm_rd0_wr1		(AHB_tcm_rd0_wr1   ),
-	.AHB_tcm_write_data		(AHB_tcm_write_data),
-	.AHB_itcm_read_data		(AHB_itcm_read_data),
+	.AHB_tcm_rd0_wr1			(AHB_tcm_rd0_wr1   ),
+	.AHB_tcm_write_data			(AHB_tcm_write_data),
+	.AHB_itcm_read_data			(AHB_itcm_read_data),
 	.AHB_itcm_read_data_valid	(AHB_itcm_read_data_valid),
-	.AHB_dtcm_read_data		(AHB_dtcm_read_data),
+	.AHB_dtcm_read_data			(AHB_dtcm_read_data),
 	.AHB_dtcm_read_data_valid	(AHB_dtcm_read_data_valid)
 );
 
 `ifdef KRV_HAS_ITCM
 itcm u_itcm(
-	.clk		(cpu_clk_g),
-	.rstn		(cpu_rstn),
-	.instr_itcm_addr		(instr_itcm_addr),
-	.instr_itcm_access		(instr_itcm_access),
+	.clk						(cpu_clk_g),
+	.rstn						(cpu_rstn),
+	.instr_itcm_addr			(instr_itcm_addr),
+	.instr_itcm_access			(instr_itcm_access),
 	.instr_itcm_read_data		(instr_itcm_read_data),
 	.instr_itcm_read_data_valid	(instr_itcm_read_data_valid),
-
-/*
-	.data_itcm_rd0_wr1		(data_itcm_rd0_wr1),
-	.data_itcm_byte_strobe		(data_itcm_byte_strobe),
-	.data_itcm_access		(data_itcm_access),
-	.data_itcm_ready		(data_itcm_ready),
-	.data_itcm_addr			(data_itcm_addr),
-	.data_itcm_write_data	(data_itcm_write_data),
-	.data_itcm_read_data		(data_itcm_read_data),
-	.data_itcm_read_data_valid	(data_itcm_read_data_valid),
-*/
-.AHB_itcm_access		(AHB_itcm_access   ),
-.AHB_tcm_addr			(AHB_tcm_addr	   ),
-.AHB_tcm_byte_strobe		(AHB_tcm_byte_strobe	   ),
-.AHB_tcm_rd0_wr1		(AHB_tcm_rd0_wr1   ),
-.AHB_tcm_write_data		(AHB_tcm_write_data),
-.AHB_itcm_read_data		(AHB_itcm_read_data),
-.AHB_itcm_read_data_valid	(AHB_itcm_read_data_valid),
+	.AHB_itcm_access			(AHB_itcm_access   ),
+	.AHB_tcm_addr				(AHB_tcm_addr	   ),
+	.AHB_tcm_byte_strobe		(AHB_tcm_byte_strobe	   ),
+	.AHB_tcm_rd0_wr1			(AHB_tcm_rd0_wr1   ),
+	.AHB_tcm_write_data			(AHB_tcm_write_data),
+	.AHB_itcm_read_data			(AHB_itcm_read_data),
+	.AHB_itcm_read_data_valid	(AHB_itcm_read_data_valid),
 
 
-	.IAHB_ready	(IAHB_ready),
-	.IAHB_read_data	(IAHB_read_data),
-	.IAHB_read_data_valid	(IAHB_read_data_valid),
-	.itcm_auto_load	(itcm_auto_load),
-	.itcm_auto_load_addr	(itcm_auto_load_addr)
-
+	.IAHB_ready					(IAHB_ready),
+	.IAHB_read_data				(IAHB_read_data),
+	.IAHB_read_data_valid		(IAHB_read_data_valid),
+	.itcm_auto_load				(itcm_auto_load),
+	.itcm_auto_load_addr		(itcm_auto_load_addr)
 );
 `else 
 assign instr_itcm_read_data_valid = 1'b0;
@@ -440,45 +414,34 @@ assign itcm_auto_load_addr = {`ADDR_WIDTH {1'b0}};
 //-----------------------------------------------------//
 `ifdef KRV_HAS_DTCM
 dtcm u_dtcm (
-	.clk			(cpu_clk_g),
-	.rstn			(cpu_rstn),
-	.data_dtcm_access	(data_dtcm_access),
-	.data_dtcm_ready	(data_dtcm_ready),
-	.data_dtcm_rd0_wr1	(data_dtcm_rd0_wr1),
+	.clk					(cpu_clk_g),
+	.rstn					(cpu_rstn),
+	.data_dtcm_access		(data_dtcm_access),
+	.data_dtcm_ready		(data_dtcm_ready),
+	.data_dtcm_rd0_wr1		(data_dtcm_rd0_wr1),
 	.data_dtcm_byte_strobe	(data_dtcm_byte_strobe),
-	.data_dtcm_addr		(data_dtcm_addr),
-	.data_dtcm_wdata	(data_dtcm_write_data),
-	.data_dtcm_rdata	(data_dtcm_read_data),
+	.data_dtcm_addr			(data_dtcm_addr),
+	.data_dtcm_wdata		(data_dtcm_write_data),
+	.data_dtcm_rdata		(data_dtcm_read_data),
 	.data_dtcm_rdata_valid	(data_dtcm_read_data_valid),
-	.AHB_dtcm_access	(AHB_dtcm_access   ),
-	.AHB_tcm_addr		(AHB_tcm_addr	   ),
+	.AHB_dtcm_access		(AHB_dtcm_access   ),
+	.AHB_tcm_addr			(AHB_tcm_addr	   ),
 	.AHB_tcm_byte_strobe	(AHB_tcm_byte_strobe	   ),
-	.AHB_tcm_rd0_wr1	(AHB_tcm_rd0_wr1   ),
-	.AHB_tcm_wdata		(AHB_tcm_write_data),
-	.AHB_dtcm_rdata		(AHB_dtcm_read_data),
+	.AHB_tcm_rd0_wr1		(AHB_tcm_rd0_wr1   ),
+	.AHB_tcm_wdata			(AHB_tcm_write_data),
+	.AHB_dtcm_rdata			(AHB_dtcm_read_data),
 	.AHB_dtcm_rdata_valid	(AHB_dtcm_read_data_valid),
 
-
-/*
-	.instr_dtcm_addr	(instr_dtcm_addr),
-	.instr_dtcm_access	(instr_dtcm_access),
-	.instr_dtcm_rdata	(instr_dtcm_read_data),
-	.instr_dtcm_rdata_valid(instr_dtcm_read_data_valid),
-*/
-	.dma_dtcm_access	(dma_dtcm_access),
-	.dma_dtcm_ready		(dma_dtcm_ready),
-	.dma_dtcm_rd0_wr1	(dma_dtcm_rd0_wr1),
-	.dma_dtcm_addr		(dma_dtcm_addr),
-	.dma_dtcm_wdata		(dma_dtcm_wdata),
-	.dma_dtcm_rdata		(dma_dtcm_rdata),
+	.dma_dtcm_access		(dma_dtcm_access),
+	.dma_dtcm_ready			(dma_dtcm_ready),
+	.dma_dtcm_rd0_wr1		(dma_dtcm_rd0_wr1),
+	.dma_dtcm_addr			(dma_dtcm_addr),
+	.dma_dtcm_wdata			(dma_dtcm_wdata),
+	.dma_dtcm_rdata			(dma_dtcm_rdata),
 	.dma_dtcm_rdata_valid	(dma_dtcm_rdata_valid)
 
 );
 `else
-/*
-assign instr_dtcm_read_data_valid = 1'b0;
-assign instr_dtcm_read_data = {`DATA_WIDTH {1'b0}};
-*/
 assign AHB_dtcm_read_data = {`DATA_WIDTH {1'b0}};
 assign data_dtcm_read_data_valid = 1'b0;
 assign data_dtcm_read_data = {`DATA_WIDTH {1'b0}};
@@ -501,12 +464,12 @@ IAHB u_IAHB_master(
 	.HTRANS		(IAHB_HTRANS),
 	.HADDR		(IAHB_HADDR),
 	.HWRITE		(IAHB_HWRITE),
-	.IAHB_access	(IAHB_access),	
-	.IAHB_addr	(IAHB_addr),
-	.IAHB_read_data	(IAHB_read_data),
+	.IAHB_access			(IAHB_access),	
+	.IAHB_addr				(IAHB_addr),
+	.IAHB_read_data			(IAHB_read_data),
 	.IAHB_read_data_valid	(IAHB_read_data_valid),
-	.IAHB_ready	(IAHB_ready),
-	.itcm_auto_load	(itcm_auto_load),
+	.IAHB_ready				(IAHB_ready),
+	.itcm_auto_load			(itcm_auto_load),
 	.itcm_auto_load_addr	(itcm_auto_load_addr)
 );
 
@@ -529,15 +492,15 @@ DAHB u_DAHB_master(
 	.HBURST		(DAHB_HBURST),
 	.HPROT		(DAHB_HPROT),
 	.HWDATA		(DAHB_HWDATA),
-	.cpu_clk	(cpu_clk_g),
-	.cpu_resetn	(cpu_rstn),
-	.DAHB_access	(DAHB_access),	
-	.DAHB_rd0_wr1	(DAHB_rd0_wr1),		
-	.DAHB_size		(DAHB_size),
-	.DAHB_write_data	(DAHB_write_data),
-	.DAHB_addr	(DAHB_addr),
+	.cpu_clk				(cpu_clk_g),
+	.cpu_resetn				(cpu_rstn),
+	.DAHB_access			(DAHB_access),	
+	.DAHB_rd0_wr1			(DAHB_rd0_wr1),		
+	.DAHB_size				(DAHB_size),
+	.DAHB_write_data		(DAHB_write_data),
+	.DAHB_addr				(DAHB_addr),
 	.DAHB_trans_buffer_full	(DAHB_trans_buffer_full),
-	.DAHB_read_data	(DAHB_read_data),
+	.DAHB_read_data			(DAHB_read_data),
 	.DAHB_read_data_valid	(DAHB_read_data_valid)
 );
 
@@ -545,8 +508,8 @@ DAHB u_DAHB_master(
 //main ahb
 //-----------------------------------------------------//
 ahb m_ahb(
-.HCLK			(HCLK),
-.HRESETn		(HRESETn),
+.HCLK				(HCLK),
+.HRESETn			(HRESETn),
 
 //Master0
 .HBUSREQ_from_M0	(IAHB_HBUSREQ),
@@ -600,18 +563,18 @@ ahb m_ahb(
 `endif
 
 //Slave0
-.HSEL_to_S0		(HSEL_S0	),
+.HSEL_to_S0			(HSEL_S0		),
 .HADDR_to_S0		(HADDR_flash	),
 .HSIZE_to_S0		(HSIZE_flash	),
 .HTRANS_to_S0		(HTRANS_flash	),
 .HWRITE_to_S0		(HWRITE_flash	),
 .HWDATA_to_S0		(HWDATA_flash	),
-.HRDATA_from_S0		(HRDATA_S0	),
+.HRDATA_from_S0		(HRDATA_S0		),
 .HRESP_from_S0		(HRESP_flash	),
-.HREADY_from_S0		(HREADY_S0	),
+.HREADY_from_S0		(HREADY_S0		),
 
 //Slave1
-.HSEL_to_S1		(HSEL_kplic),
+.HSEL_to_S1			(HSEL_kplic	),
 .HADDR_to_S1		(HADDR_kplic),
 .HTRANS_to_S1		(HTRANS_kplic),
 .HWRITE_to_S1		(HWRITE_kplic),
@@ -621,7 +584,7 @@ ahb m_ahb(
 .HREADY_from_S1		(HREADY_kplic),
 
 //Slave2
-.HSEL_to_S2		(HSEL_core_timer),
+.HSEL_to_S2			(HSEL_core_timer),
 .HADDR_to_S2		(HADDR_core_timer),
 .HTRANS_to_S2		(HTRANS_core_timer),
 .HWRITE_to_S2		(HWRITE_core_timer),
@@ -631,7 +594,7 @@ ahb m_ahb(
 .HREADY_from_S2		(HREADY_core_timer),
 
 //Slave3
-.HSEL_to_S3		(),
+.HSEL_to_S3			(),
 .HADDR_to_S3		(),
 .HTRANS_to_S3		(),
 .HWRITE_to_S3		(),
@@ -641,7 +604,7 @@ ahb m_ahb(
 .HREADY_from_S3		(1'b1),
 
 //Slave4
-.HSEL_to_S4		(HSEL_apb	),
+.HSEL_to_S4			(HSEL_apb	),
 .HADDR_to_S4		(HADDR_apb	),
 .HTRANS_to_S4		(HTRANS_apb	),
 .HWRITE_to_S4		(HWRITE_apb	),
@@ -651,7 +614,7 @@ ahb m_ahb(
 .HREADY_from_S4		(HREADY_apb	),
 
 //Slave5
-.HSEL_to_S5		(),
+.HSEL_to_S5			(),
 .HADDR_to_S5		(),
 .HTRANS_to_S5		(),
 .HWRITE_to_S5		(),
@@ -661,7 +624,7 @@ ahb m_ahb(
 .HREADY_from_S5		(1'b1),
 
 //Slave6
-.HSEL_to_S6		(),
+.HSEL_to_S6			(),
 .HADDR_to_S6		(),
 .HTRANS_to_S6		(),
 .HWRITE_to_S6		(),
@@ -681,16 +644,16 @@ apb_ss m_apb(
     .UART_RX		(UART_RX	),
     .UART_TX		(UART_TX	),
     .timer_int		(timer_int	),
-    .HCLK		(HCLK),
+    .HCLK			(HCLK),
     .HRESETn		(HRESETn),
-    .HREADY		(1'b1),
-    .HSEL		(HSEL_apb	),
-    .HADDR		(HADDR_apb	),
-    .HTRANS		(HTRANS_apb	),
-    .HWRITE		(HWRITE_apb	),
-    .HWDATA		(HWDATA_apb	),
-    .HRDATA		(HRDATA_apb	),
-    .HRESP		(HRESP_apb	),
+    .HREADY			(1'b1),
+    .HSEL			(HSEL_apb	),
+    .HADDR			(HADDR_apb	),
+    .HTRANS			(HTRANS_apb	),
+    .HWRITE			(HWRITE_apb	),
+    .HWDATA			(HWDATA_apb	),
+    .HRDATA			(HRDATA_apb	),
+    .HRESP			(HRESP_apb	),
     .HREADYOUT		(HREADY_apb	)
 );
 
@@ -724,7 +687,7 @@ flash_sim u_flash_ss(
 kplic u_kplic (
 .kplic_clk		(kplic_clk),
 .kplic_rstn		(kplic_rstn),
-.external_int		(external_int),
+.external_int	(external_int),
 .kplic_int		(kplic_int),
 
 	.HCLK		(HCLK),
@@ -752,17 +715,17 @@ assign kplic_int = 1'b0;
 `ifdef KRV_HAS_MTIMER
 core_timer u_core_timer (
 	.core_timer_int		(core_timer_int),
-	.HCLK		(HCLK),
-	.HRESETn	(HRESETn),
-	.HSEL		(HSEL_core_timer),
-	.HADDR		(HADDR_core_timer),
-	.HWRITE		(HWRITE_core_timer),
-	.HTRANS		(HTRANS_core_timer),
-	.HBURST		(HBURST_core_timer),
-	.HWDATA		(HWDATA_core_timer),
-	.HREADY		(HREADY_core_timer),
-	.HRESP		(HRESP_core_timer),
-	.HRDATA		(HRDATA_core_timer)
+	.HCLK				(HCLK),
+	.HRESETn			(HRESETn),
+	.HSEL				(HSEL_core_timer),
+	.HADDR				(HADDR_core_timer),
+	.HWRITE				(HWRITE_core_timer),
+	.HTRANS				(HTRANS_core_timer),
+	.HBURST				(HBURST_core_timer),
+	.HWDATA				(HWDATA_core_timer),
+	.HREADY				(HREADY_core_timer),
+	.HRESP				(HRESP_core_timer),
+	.HRDATA				(HRDATA_core_timer)
 );
 `else
 assign HREADY_core_timer = 1'b1;
@@ -783,13 +746,13 @@ wire dm_resp_ready;
 wire [`DBUS_S_WIDTH - 1 : 0]	dm_resp_bits;
 
 dtm u_dtm (
-.TDI			(TDI		),
-.TDO			(TDO		),
-.TCK			(TCK		),
-.TMS			(TMS		),
-.TRST			(TRST		),
-.sys_clk		(cpu_clk	),
-.sys_rstn		(cpu_rstn	),
+.TDI				(TDI		),
+.TDO				(TDO		),
+.TCK				(TCK		),
+.TMS				(TMS		),
+.TRST				(TRST		),
+.sys_clk			(cpu_clk	),
+.sys_rstn			(cpu_rstn	),
 .dtm_req_valid		(dtm_req_valid	),
 .dtm_req_ready		(dtm_req_ready	),
 .dtm_req_bits		(dtm_req_bits	),
@@ -818,8 +781,8 @@ dm u_dm(
 	.HPROT		(sb_HPROT),
 	.HWDATA		(sb_HWDATA),
 
-.sys_clk		(cpu_clk	),
-.sys_rstn		(cpu_rstn	),
+.sys_clk			(cpu_clk	),
+.sys_rstn			(cpu_rstn	),
 .dtm_req_valid		(dtm_req_valid	),
 .dtm_req_ready		(dtm_req_ready	),
 .dtm_req_bits		(dtm_req_bits	),
@@ -829,9 +792,9 @@ dm u_dm(
 .resumereq_w1		(resumereq_w1	),
 .dbg_reg_access		(dbg_reg_access	),
 .dbg_wr1_rd0		(dbg_wr1_rd0	),
-.dbg_regno		(dbg_regno	),
+.dbg_regno			(dbg_regno	),
 .dbg_write_data		(dbg_write_data	),
-.dbg_read_data_valid	(dbg_read_data_valid),
+.dbg_read_data_valid(dbg_read_data_valid),
 .dbg_read_data		(dbg_read_data	)
 );
 

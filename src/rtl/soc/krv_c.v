@@ -1,4 +1,3 @@
-
 //==========================================||
 // File Name:         krv_c.v               ||
 // Author:            Kitty Wang            ||
@@ -454,7 +453,7 @@ IAHB u_IAHB_master(
     .HWRITE        (IAHB_HWRITE),
     .IAHB_access             (IAHB_access),    
     .IAHB_addr               (IAHB_addr),
-    .IAHB_read_dat           (IAHB_read_data),
+    .IAHB_read_data          (IAHB_read_data),
     .IAHB_read_data_valid    (IAHB_read_data_valid),
     .IAHB_ready              (IAHB_ready),
     .itcm_auto_load          (itcm_auto_load),

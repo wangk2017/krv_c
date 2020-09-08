@@ -50,7 +50,6 @@ ahb2regbus #(.IP_REG_START_OFFSET (16'h4000), .IP_REG_END_OFFSET(16'hbffc), .IP_
 	.HRDATA			(HRDATA),
 	//IP reg bus
 	.ip_read_data		(core_timer_reg_read_data),
-	.ip_read_data_valid	(1'b1),
 	.ip_write_data		(core_timer_reg_write_data),
 	.ip_addr		(ip_addr),
 	.valid_reg_access	(valid_reg_access),

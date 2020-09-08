@@ -6,6 +6,8 @@ wr_rstn,
 w_en,
 w_addr,
 wr_data,
+rd_clk,
+rd_rstn,
 r_en,
 r_addr,
 //output
@@ -23,14 +25,16 @@ input wr_rstn;
 input [DATA_WIDTH - 1 : 0] wr_data;
 
 // 2: to read side
-output rd_valid;
-output [DATA_WIDTH - 1 : 0] rd_data;
+output reg rd_valid;
+output reg [DATA_WIDTH - 1 : 0] rd_data;
 
 // 3: from wr_ctrl block
 input w_en;
 input [PTR_WIDTH - 1 : 0] w_addr;
 
 // 4: from rd_ctrl block
+input rd_clk;
+input rd_rstn;
 input r_en;
 input [PTR_WIDTH - 1 : 0] r_addr;
 
@@ -60,8 +64,26 @@ begin
 	end
 end
 
-assign rd_valid = r_en;
-assign rd_data  = fifo_mem[r_addr];
+always @(posedge rd_clk or negedge rd_rstn)
+begin
+	if(!rd_rstn)
+	begin
+		rd_valid <= 1'b0;
+		rd_data <= {DATA_WIDTH{1'b0}};
+	end
+	else
+	begin
+		if(r_en)
+		begin
+			rd_valid <= 1'b1;
+			rd_data  <= fifo_mem[r_addr];
+		end
+		else
+		begin
+			rd_valid <= 1'b0;
+		end
+	end
+end
 
 endmodule
 

@@ -106,6 +106,8 @@ fifo_storage #(.DATA_WIDTH (DATA_WIDTH), .FIFO_DEPTH(FIFO_DEPTH),.PTR_WIDTH(PTR_
 .w_en		(w_en),
 .w_addr		(w_addr[PTR_WIDTH -1 : 0]),
 .wr_data	(wr_data),
+.rd_clk		(rd_clk),
+.rd_rstn	(rd_rstn),
 .r_en		(r_en),
 .r_addr		(r_addr[PTR_WIDTH -1 : 0]),
 //output

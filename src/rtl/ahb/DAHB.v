@@ -141,7 +141,7 @@ wire [`EMEM_BUFFER_WIDTH - 1 : 0] DAHB_trans_buffer_rd_data;
 assign DAHB_trans_buffer_wr_valid = DAHB_access;
 assign DAHB_trans_buffer_wr_data = {DAHB_size,DAHB_rd0_wr1,DAHB_write_data,DAHB_addr};
 //assign DAHB_trans_buffer_rd_ready = (state==ADDR_S) && HREADY;
-assign DAHB_trans_buffer_rd_ready = (state==ADDR_S);
+assign DAHB_trans_buffer_rd_ready = (next_state==ADDR_S);
 
 wire DAHB_trans_buffer_empty;
 wire [`ADDR_WIDTH - 1 : 0] DAHB_trans_buffer_out_addr; 

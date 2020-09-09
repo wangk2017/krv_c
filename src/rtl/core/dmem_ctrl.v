@@ -195,7 +195,8 @@ begin
 	2'b10: mem_write_data = store_data_for_sh;	 //for half-word access
 	default: mem_write_data = {`DATA_WIDTH{1'b0}};
 	endcase
-end			
+end
+	
 
 
 assign data_dtcm_access 	= mem_access && addr_dtcm; 
